@@ -32,9 +32,31 @@ export interface DriveProgram {
   webViewLink?: string;
 }
 
+export type DirectionAccent =
+  | "violet"
+  | "orange"
+  | "sky"
+  | "emerald"
+  | "teal"
+  | "amber"
+  | "rose";
+
+export type DirectionIcon =
+  | "cap"
+  | "book"
+  | "school"
+  | "rocket"
+  | "layers"
+  | "building"
+  | "diploma";
+
 export interface Direction {
   id: string;
+  /** Коротке позначення напрямку: ПКО, ШС, МКА… */
+  code: string;
   name: string;
   description?: string;
+  accent: DirectionAccent;
+  icon: DirectionIcon;
   disciplines?: string[];
 }
