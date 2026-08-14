@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { DIRECTIONS } from "@/lib/directions";
+import DirectionCards from "@/components/DirectionCards";
 import type { DriveProgram, Language, LessonFormat, MaterialType } from "@/lib/types";
 
 const DURATIONS = [45, 60, 90, 120, 180] as const;
@@ -124,7 +125,10 @@ export default function Home() {
   };
 
   // форма
+  const [step, setStep] = useState<"directions" | "form">("directions");
   const [directionId, setDirectionId] = useState(DIRECTIONS[0].id);
+  const currentDirection =
+    DIRECTIONS.find((d) => d.id === directionId) ?? DIRECTIONS[0];
   const [product, setProduct] = useState("");
   const [discipline, setDiscipline] = useState("");
   const [topic, setTopic] = useState("");
@@ -341,7 +345,35 @@ export default function Home() {
         </div>
       </header>
 
-      <main className="mx-auto max-w-7xl px-4 py-6 grid gap-6 lg:grid-cols-[420px_1fr]">
+      {step === "directions" && (
+        <main className="mx-auto max-w-7xl px-4 py-10">
+          <DirectionCards
+            directions={DIRECTIONS}
+            onSelect={(id) => {
+              setDirectionId(id);
+              setProduct("");
+              setStep("form");
+            }}
+          />
+        </main>
+      )}
+
+      {step === "form" && (
+      <main className="mx-auto max-w-7xl px-4 py-6">
+        <button
+          type="button"
+          onClick={() => setStep("directions")}
+          className="mb-4 inline-flex items-center gap-1.5 text-sm text-slate-500 hover:text-slate-800"
+        >
+          ← Усі напрямки
+        </button>
+        <p className="mb-4 text-sm text-slate-700">
+          Напрямок:{" "}
+          <span className="font-semibold">
+            {currentDirection.code} — {currentDirection.name}
+          </span>
+        </p>
+        <div className="grid gap-6 lg:grid-cols-[420px_1fr]">
         {/* ФОРМА */}
         <section className="space-y-5">
           <div className="rounded-xl bg-white p-5 shadow-sm border border-slate-200 space-y-3">
@@ -415,15 +447,13 @@ export default function Home() {
               >
                 {DIRECTIONS.map((d) => (
                   <option key={d.id} value={d.id}>
-                    {d.name}
-                    {d.description ? ` · ${d.description}` : ""}
+                    {d.code} — {d.name}
                   </option>
                 ))}
               </select>
             </label>
 
-            {(DIRECTIONS.find((d) => d.id === directionId)?.disciplines?.length ?? 0) >
-              0 && (
+            {(currentDirection.disciplines?.length ?? 0) > 0 && (
               <label className="block">
                 <span className="text-sm font-medium text-slate-700">Продукт / курс</span>
                 <select
@@ -432,13 +462,11 @@ export default function Home() {
                   className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-sky-500 focus:outline-none"
                 >
                   <option value="">— не вказувати —</option>
-                  {(DIRECTIONS.find((d) => d.id === directionId)?.disciplines ?? []).map(
-                    (p) => (
-                      <option key={p} value={p}>
-                        {p}
-                      </option>
-                    )
-                  )}
+                  {(currentDirection.disciplines ?? []).map((p) => (
+                    <option key={p} value={p}>
+                      {p}
+                    </option>
+                  ))}
                 </select>
               </label>
             )}
@@ -713,7 +741,9 @@ export default function Home() {
             )}
           </div>
         </section>
+        </div>
       </main>
+      )}
     </div>
   );
 }
