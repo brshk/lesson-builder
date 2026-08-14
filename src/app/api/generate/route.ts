@@ -87,8 +87,8 @@ export async function POST(req: NextRequest) {
     );
   }
 
-  const direction =
-    DIRECTIONS.find((d) => d.id === body.directionId)?.name ?? body.directionId;
+  const dir = DIRECTIONS.find((d) => d.id === body.directionId);
+  const direction = dir ? `${dir.code} — ${dir.name}` : body.directionId;
 
   let program: { name: string; text: string } | undefined;
   if (body.programFileId && isDriveConfigured()) {
