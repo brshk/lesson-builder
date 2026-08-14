@@ -1,0 +1,97 @@
+@import "tailwindcss";
+
+:root {
+  --brand: #0ea5e9;
+}
+
+.prose-output h1 {
+  font-size: 1.5rem;
+  font-weight: 700;
+  margin: 1.5rem 0 0.75rem;
+  color: #0f172a;
+}
+.prose-output h2 {
+  font-size: 1.25rem;
+  font-weight: 700;
+  margin: 1.25rem 0 0.5rem;
+  color: #0f172a;
+}
+.prose-output h3 {
+  font-size: 1.1rem;
+  font-weight: 600;
+  margin: 1rem 0 0.5rem;
+}
+.prose-output h4 {
+  font-weight: 600;
+  margin: 0.75rem 0 0.375rem;
+}
+.prose-output p {
+  margin: 0.5rem 0;
+  line-height: 1.65;
+}
+.prose-output ul,
+.prose-output ol {
+  margin: 0.5rem 0 0.5rem 1.5rem;
+}
+.prose-output ul {
+  list-style: disc;
+}
+.prose-output ol {
+  list-style: decimal;
+}
+.prose-output li {
+  margin: 0.25rem 0;
+  line-height: 1.6;
+}
+.prose-output table {
+  border-collapse: collapse;
+  margin: 0.75rem 0;
+  width: 100%;
+  font-size: 0.875rem;
+}
+.prose-output th,
+.prose-output td {
+  border: 1px solid #cbd5e1;
+  padding: 0.375rem 0.625rem;
+  text-align: left;
+  vertical-align: top;
+}
+.prose-output th {
+  background: #f1f5f9;
+  font-weight: 600;
+}
+.prose-output code {
+  background: #f1f5f9;
+  border-radius: 4px;
+  padding: 0.1rem 0.3rem;
+  font-size: 0.85em;
+}
+.prose-output pre {
+  background: #0f172a;
+  color: #e2e8f0;
+  border-radius: 8px;
+  padding: 0.875rem 1rem;
+  overflow-x: auto;
+  margin: 0.75rem 0;
+  font-size: 0.85rem;
+}
+.prose-output pre code {
+  background: transparent;
+  padding: 0;
+  color: inherit;
+}
+.prose-output a {
+  color: #0284c7;
+  text-decoration: underline;
+}
+.prose-output blockquote {
+  border-left: 3px solid #94a3b8;
+  padding-left: 0.875rem;
+  color: #475569;
+  margin: 0.75rem 0;
+}
+.prose-output hr {
+  border: none;
+  border-top: 1px solid #cbd5e1;
+  margin: 1.25rem 0;
+}
