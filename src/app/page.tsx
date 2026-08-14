@@ -422,23 +422,26 @@ export default function Home() {
               </select>
             </label>
 
-            <label className="block">
-              <span className="text-sm font-medium text-slate-700">Продукт / курс</span>
-              <select
-                value={product}
-                onChange={(e) => setProduct(e.target.value)}
-                className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-sky-500 focus:outline-none"
-              >
-                <option value="">— не вказувати —</option>
-                {(DIRECTIONS.find((d) => d.id === directionId)?.disciplines ?? []).map(
-                  (p) => (
-                    <option key={p} value={p}>
-                      {p}
-                    </option>
-                  )
-                )}
-              </select>
-            </label>
+            {(DIRECTIONS.find((d) => d.id === directionId)?.disciplines?.length ?? 0) >
+              0 && (
+              <label className="block">
+                <span className="text-sm font-medium text-slate-700">Продукт / курс</span>
+                <select
+                  value={product}
+                  onChange={(e) => setProduct(e.target.value)}
+                  className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-sky-500 focus:outline-none"
+                >
+                  <option value="">— не вказувати —</option>
+                  {(DIRECTIONS.find((d) => d.id === directionId)?.disciplines ?? []).map(
+                    (p) => (
+                      <option key={p} value={p}>
+                        {p}
+                      </option>
+                    )
+                  )}
+                </select>
+              </label>
+            )}
 
             <label className="block">
               <span className="text-sm font-medium text-slate-700">Дисципліна *</span>
