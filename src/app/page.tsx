@@ -20,6 +20,50 @@ const LANGUAGES: { value: Language; label: string }[] = [
   { value: "en", label: "English" },
 ];
 
+type ProviderId = "gemini" | "openai" | "claude";
+
+const PROVIDERS: {
+  id: ProviderId;
+  label: string;
+  badge: string;
+  placeholder: string;
+  storageKey: string;
+  keyUrl: string;
+  keyUrlLabel: string;
+  note: string;
+}[] = [
+  {
+    id: "gemini",
+    label: "Gemini",
+    badge: "безкоштовно",
+    placeholder: "AIza…",
+    storageKey: "gemini_api_key",
+    keyUrl: "https://aistudio.google.com/apikey",
+    keyUrlLabel: "aistudio.google.com/apikey",
+    note: "Безкоштовний ключ без банківської картки: увійдіть Google-акаунтом → Create API key. Діє безкоштовний денний ліміт запитів.",
+  },
+  {
+    id: "openai",
+    label: "ChatGPT",
+    badge: "платний ключ",
+    placeholder: "sk-proj-…",
+    storageKey: "openai_api_key",
+    keyUrl: "https://platform.openai.com/api-keys",
+    keyUrlLabel: "platform.openai.com/api-keys",
+    note: "Потрібен акаунт OpenAI Platform із поповненим балансом (Billing, від $5). Підписка ChatGPT Plus для API не діє — це окремий баланс.",
+  },
+  {
+    id: "claude",
+    label: "Claude",
+    badge: "платний ключ",
+    placeholder: "sk-ant-…",
+    storageKey: "anthropic_api_key",
+    keyUrl: "https://console.anthropic.com/settings/keys",
+    keyUrlLabel: "console.anthropic.com",
+    note: "Потрібен баланс на акаунті Anthropic (Plans & Billing, від $5). Одна генерація ≈ $0.10–0.30.",
+  },
+];
+
 const MATERIALS: { value: MaterialType; label: string; hint: string }[] = [
   { value: "scenario", label: "Детальний сценарій заняття", hint: "поетапний план з таймінгом і конспектом" },
   { value: "slides", label: "Опис слайдів презентації", hint: "вміст, візуал і нотатки для кожного слайда" },
@@ -31,23 +75,25 @@ type Phase = "idle" | "generating" | "done" | "error";
 
 export default function Home() {
   // AI-провайдер і API-ключ користувача (BYOK) — зберігаються лише в браузері
-  type ProviderId = "gemini" | "claude";
   const [provider, setProvider] = useState<ProviderId>("gemini");
   const [keys, setKeys] = useState<Record<ProviderId, string>>({
     gemini: "",
+    openai: "",
     claude: "",
   });
   const [showApiKey, setShowApiKey] = useState(false);
   const apiKey = keys[provider];
+  const providerInfo = PROVIDERS.find((p) => p.id === provider)!;
 
   useEffect(() => {
     try {
       const savedProvider = window.localStorage.getItem("llm_provider");
-      if (savedProvider === "claude" || savedProvider === "gemini") {
-        setProvider(savedProvider);
+      if (PROVIDERS.some((p) => p.id === savedProvider)) {
+        setProvider(savedProvider as ProviderId);
       }
       setKeys({
         gemini: window.localStorage.getItem("gemini_api_key") ?? "",
+        openai: window.localStorage.getItem("openai_api_key") ?? "",
         claude: window.localStorage.getItem("anthropic_api_key") ?? "",
       });
     } catch {
@@ -66,12 +112,11 @@ export default function Home() {
 
   const updateApiKey = (value: string) => {
     setKeys((prev) => ({ ...prev, [provider]: value }));
-    const storageKey = provider === "claude" ? "anthropic_api_key" : "gemini_api_key";
     try {
       if (value.trim()) {
-        window.localStorage.setItem(storageKey, value.trim());
+        window.localStorage.setItem(providerInfo.storageKey, value.trim());
       } else {
-        window.localStorage.removeItem(storageKey);
+        window.localStorage.removeItem(providerInfo.storageKey);
       }
     } catch {
       /* ignore */
@@ -301,42 +346,35 @@ export default function Home() {
         <section className="space-y-5">
           <div className="rounded-xl bg-white p-5 shadow-sm border border-slate-200 space-y-3">
             <h2 className="font-semibold text-slate-800">AI-модель та ключ</h2>
-            <div className="flex gap-2">
-              <button
-                type="button"
-                onClick={() => updateProvider("gemini")}
-                className={`flex-1 rounded-lg px-3 py-2 text-sm border transition ${
-                  provider === "gemini"
-                    ? "bg-sky-500 text-white border-sky-500"
-                    : "bg-white text-slate-700 border-slate-300 hover:border-sky-400"
-                }`}
-              >
-                Gemini
-                <span className={`block text-[11px] ${provider === "gemini" ? "text-sky-100" : "text-slate-400"}`}>
-                  безкоштовно
-                </span>
-              </button>
-              <button
-                type="button"
-                onClick={() => updateProvider("claude")}
-                className={`flex-1 rounded-lg px-3 py-2 text-sm border transition ${
-                  provider === "claude"
-                    ? "bg-sky-500 text-white border-sky-500"
-                    : "bg-white text-slate-700 border-slate-300 hover:border-sky-400"
-                }`}
-              >
-                Claude
-                <span className={`block text-[11px] ${provider === "claude" ? "text-sky-100" : "text-slate-400"}`}>
-                  платний ключ, вища якість
-                </span>
-              </button>
+            <div className="grid grid-cols-3 gap-2">
+              {PROVIDERS.map((p) => (
+                <button
+                  key={p.id}
+                  type="button"
+                  onClick={() => updateProvider(p.id)}
+                  className={`rounded-lg px-2 py-2 text-sm border transition ${
+                    provider === p.id
+                      ? "bg-sky-500 text-white border-sky-500"
+                      : "bg-white text-slate-700 border-slate-300 hover:border-sky-400"
+                  }`}
+                >
+                  {p.label}
+                  <span
+                    className={`block text-[11px] ${
+                      provider === p.id ? "text-sky-100" : "text-slate-400"
+                    }`}
+                  >
+                    {p.badge}
+                  </span>
+                </button>
+              ))}
             </div>
             <div className="flex gap-2">
               <input
                 type={showApiKey ? "text" : "password"}
                 value={apiKey}
                 onChange={(e) => updateApiKey(e.target.value)}
-                placeholder={provider === "claude" ? "sk-ant-…" : "AIza…"}
+                placeholder={providerInfo.placeholder}
                 autoComplete="off"
                 className="flex-1 rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-sky-500 focus:outline-none"
               />
@@ -348,36 +386,18 @@ export default function Home() {
                 {showApiKey ? "Сховати" : "Показати"}
               </button>
             </div>
-            {provider === "gemini" ? (
-              <p className="text-xs text-slate-500">
-                Безкоштовний ключ (без банківської картки): увійдіть у Google-акаунт
-                на{" "}
-                <a
-                  href="https://aistudio.google.com/apikey"
-                  target="_blank"
-                  rel="noreferrer"
-                  className="text-sky-600 underline"
-                >
-                  aistudio.google.com/apikey
-                </a>{" "}
-                → Create API key. Діє безкоштовний денний ліміт запитів. Ключ
-                зберігається лише у вашому браузері.
-              </p>
-            ) : (
-              <p className="text-xs text-slate-500">
-                Платний ключ: створіть на{" "}
-                <a
-                  href="https://console.anthropic.com/settings/keys"
-                  target="_blank"
-                  rel="noreferrer"
-                  className="text-sky-600 underline"
-                >
-                  console.anthropic.com
-                </a>{" "}
-                і поповніть баланс (Plans &amp; Billing, від $5). Одна генерація ≈
-                $0.10–0.30. Ключ зберігається лише у вашому браузері.
-              </p>
-            )}
+            <p className="text-xs text-slate-500">
+              Ключ:{" "}
+              <a
+                href={providerInfo.keyUrl}
+                target="_blank"
+                rel="noreferrer"
+                className="text-sky-600 underline"
+              >
+                {providerInfo.keyUrlLabel}
+              </a>
+              . {providerInfo.note} Ключ зберігається лише у вашому браузері.
+            </p>
           </div>
 
           <div className="rounded-xl bg-white p-5 shadow-sm border border-slate-200 space-y-4">
