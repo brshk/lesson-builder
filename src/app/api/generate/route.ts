@@ -11,10 +11,16 @@ export const maxDuration = 300;
 const MODEL = process.env.ANTHROPIC_MODEL || "claude-sonnet-4-5";
 
 export async function POST(req: NextRequest) {
-  if (!process.env.ANTHROPIC_API_KEY) {
+  // Ключ користувача (BYOK) має пріоритет; env-ключ — запасний варіант
+  const userApiKey = req.headers.get("x-user-api-key")?.trim();
+  const apiKey = userApiKey || process.env.ANTHROPIC_API_KEY;
+  if (!apiKey) {
     return new Response(
-      JSON.stringify({ error: "ANTHROPIC_API_KEY не налаштовано" }),
-      { status: 500, headers: { "Content-Type": "application/json" } }
+      JSON.stringify({
+        error:
+          "Не вказано API-ключ Anthropic. Введіть свій ключ у полі «API-ключ Anthropic» угорі форми (створюється на console.anthropic.com).",
+      }),
+      { status: 401, headers: { "Content-Type": "application/json" } }
     );
   }
 
@@ -49,7 +55,7 @@ export async function POST(req: NextRequest) {
     }
   }
 
-  const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
+  const client = new Anthropic({ apiKey });
 
   const encoder = new TextEncoder();
   const stream = new ReadableStream<Uint8Array>({
