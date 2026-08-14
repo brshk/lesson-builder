@@ -69,6 +69,18 @@ export const DIRECTIONS: Direction[] = [
     ],
   },
   {
+    id: "junior-academy",
+    name: "Мала Комп'ютерна Академія",
+    description: "1–8 клас · 7–14 років",
+    disciplines: [],
+  },
+  {
+    id: "first-step",
+    name: "Перший Крок",
+    description: "Для наймолодших",
+    disciplines: [],
+  },
+  {
     id: "it-schools",
     name: "ІТ-програми та школи",
     description: "Для дітей та підлітків",
