@@ -6,6 +6,7 @@ import remarkGfm from "remark-gfm";
 import { DIRECTIONS } from "@/lib/directions";
 import DirectionCards from "@/components/DirectionCards";
 import ProgramCards from "@/components/ProgramCards";
+import { PROGRAM_PORTAL_SLUG } from "@/lib/portalMap";
 import type { DriveProgram, Language, LessonFormat, MaterialType } from "@/lib/types";
 
 const DURATIONS = [45, 60, 90, 120, 180] as const;
@@ -476,6 +477,11 @@ export default function Home() {
               {product && (
                 <p className="mt-0.5 text-slate-500">
                   Програма: <span className="font-medium text-slate-800">{product}</span>
+                </p>
+              )}
+              {product && PROGRAM_PORTAL_SLUG[product] && (
+                <p className="mt-1 text-xs text-emerald-700">
+                  📄 Опис продукту з ПКО-порталу враховується при генерації
                 </p>
               )}
               <button
