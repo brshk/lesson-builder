@@ -1,4 +1,52 @@
-import type { Direction } from "./types";
+import type { Direction, ProgramGroup } from "./types";
+
+/** Категорії програм напрямку «СК — Спеціальні курси». */
+const SK_GROUPS: ProgramGroup[] = [
+  {
+    title: "Програмування",
+    programs: [
+      "Front-end розробка + AI",
+      "Full-stack + AI",
+      "Тестувальник ПЗ (QA) + AI",
+      "Python + AI",
+      "DevOps-інженер + AI",
+      "Вайб-кодинг",
+      "Data Analytics + AI",
+    ],
+  },
+  {
+    title: "Дизайн",
+    programs: [
+      "Графічний дизайн + AI",
+      "Motion-design + AI",
+      "Моделювання в 3Ds Max + AI",
+      "FIGMA + AI",
+      "UI/UX дизайн + AI",
+      "Дизайн інтер'єру + AI",
+      "Дизайн легко: Canva + AI",
+    ],
+  },
+  {
+    title: "Кібербезпека",
+    programs: ["Білий хакінг"],
+  },
+  {
+    title: "Інші напрямки",
+    programs: [
+      "Штучний інтелект від нуля до профі",
+      "АІ для бізнесу",
+      "Бізнес аналітика + AI",
+      "Інтернет-маркетинг + AI",
+      "Маркетолог + AI",
+      "Digital Marketing Pro",
+      "Контекстна реклама Google Ads",
+      "Таргетинг у Facebook та Instagram",
+      "Курси англійської (Step2Talk)",
+      "Корпоративне навчання",
+      "Індивідуальні курси",
+    ],
+  },
+];
 
 /**
  * Освітні напрямки IT STEP (структура карток).
@@ -63,34 +111,8 @@ export const DIRECTIONS: Direction[] = [
       "Інтенсивні спеціалізовані курси підвищення кваліфікації та швидкого опанування AI-інструментів.",
     accent: "teal",
     icon: "layers",
-    disciplines: [
-      "Front-end розробка + AI",
-      "Full-stack + AI",
-      "Тестувальник ПЗ (QA) + AI",
-      "Python + AI",
-      "DevOps-інженер + AI",
-      "Вайб-кодинг",
-      "Data Analytics + AI",
-      "Графічний дизайн + AI",
-      "Motion-design + AI",
-      "Моделювання в 3Ds Max + AI",
-      "FIGMA + AI",
-      "UI/UX дизайн + AI",
-      "Дизайн інтер'єру + AI",
-      "Дизайн легко: Canva + AI",
-      "Інтернет-маркетинг + AI",
-      "Маркетолог + AI",
-      "Digital Marketing Pro",
-      "Контекстна реклама Google Ads",
-      "Таргетинг у Facebook та Instagram",
-      "Штучний інтелект від нуля до профі",
-      "АІ для бізнесу",
-      "Бізнес аналітика + AI",
-      "Білий хакінг",
-      "Курси англійської (Step2Talk)",
-      "Корпоративне навчання",
-      "Індивідуальні курси",
-    ],
+    groups: SK_GROUPS,
+    disciplines: SK_GROUPS.flatMap((g) => g.programs),
   },
   {
     id: "college",

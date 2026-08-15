@@ -50,6 +50,12 @@ export type DirectionIcon =
   | "building"
   | "diploma";
 
+/** Категорія програм усередині напрямку (напр. «Дизайн» у СК). */
+export interface ProgramGroup {
+  title: string;
+  programs: string[];
+}
+
 export interface Direction {
   id: string;
   /** Коротке позначення напрямку: ПКО, ШС, МКА… */
@@ -58,5 +64,8 @@ export interface Direction {
   description?: string;
   accent: DirectionAccent;
   icon: DirectionIcon;
+  /** Плаский список усіх програм напрямку. */
   disciplines?: string[];
+  /** Якщо задано — програми показуються згрупованими за категоріями. */
+  groups?: ProgramGroup[];
 }
