@@ -1,4 +1,22 @@
 import type { Direction, ProgramGroup } from "./types";
+import { MKA_COURSES, PSH_COURSES } from "./programDrive";
+
+/** Категорії програм напрямку «МКА — Освіта для дітей». */
+const MKA_GROUPS: ProgramGroup[] = [
+  {
+    title: "МКА — Мала Комп'ютерна Академія",
+    programs: Object.keys(MKA_COURSES),
+  },
+  {
+    title: "ПШ — Перший крок",
+    programs: [
+      ...Object.keys(PSH_COURSES),
+      "Digital Art Kids",
+      "МегаАрт 2D",
+      "3D-мейкер",
+    ],
+  },
+];
 
 /** Категорії програм напрямку «СК — Спеціальні курси». */
 const SK_GROUPS: ProgramGroup[] = [
@@ -98,10 +116,11 @@ export const DIRECTIONS: Direction[] = [
     code: "МКА",
     name: "Освіта для дітей",
     description:
-      "Мала Комп'ютерна Академія: перші кроки в IT для учнів 1–8 класів, 7–14 років.",
+      "Мала Комп'ютерна Академія та Перший крок: IT для учнів 1–8 класів, 7–14 років.",
     accent: "emerald",
     icon: "rocket",
-    disciplines: ["Мала Комп'ютерна Академія", "ПШ — Перший крок (ІТ Старт)"],
+    groups: MKA_GROUPS,
+    disciplines: MKA_GROUPS.flatMap((g) => g.programs),
   },
   {
     id: "sk",
