@@ -13,6 +13,7 @@ export type MaterialType =
 export interface GenerateRequest {
   directionId: string;
   product?: string; // продукт/курс з каталогу напрямку
+  lessonNumber?: number; // номер уроку в курсі (для шапки шаблону)
   discipline: string;
   topic: string;
   duration: number; // хвилини
