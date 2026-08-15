@@ -1,6 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import { PROGRAM_DRIVE, driveRefFor, driveViewUrl } from "@/lib/programDrive";
-import { fetchDriveProgram } from "@/lib/driveProgramFetch";
+import {
+  fetchDriveProgram,
+  listPublicFolder,
+  pickProgramFile,
+} from "@/lib/driveProgramFetch";
 
 export const runtime = "nodejs";
 export const maxDuration = 60;
@@ -15,6 +19,27 @@ export const dynamic = "force-dynamic";
 export async function GET(req: NextRequest) {
   const product = req.nextUrl.searchParams.get("product");
   const fileId = req.nextUrl.searchParams.get("fileId");
+  const folderId = req.nextUrl.searchParams.get("folderId");
+
+  // Перегляд вмісту публічної папки: /api/program-check?folderId=<id>
+  if (folderId) {
+    try {
+      const items = await listPublicFolder(folderId);
+      const pick = pickProgramFile(items);
+      return NextResponse.json({
+        ok: items.length > 0,
+        folderId,
+        count: items.length,
+        picked: pick ? { id: pick.id, name: pick.name, kind: pick.kind } : null,
+        items: items.map((i) => ({ id: i.id, name: i.name, kind: i.kind })),
+      });
+    } catch (e) {
+      return NextResponse.json(
+        { ok: false, folderId, error: e instanceof Error ? e.message : "error" },
+        { status: 502 }
+      );
+    }
+  }
 
   // Перевірка довільного файлу: /api/program-check?fileId=<id>&kind=docx|gdoc|pdf|gsheet
   if (fileId) {
