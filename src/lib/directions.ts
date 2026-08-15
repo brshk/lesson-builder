@@ -36,11 +36,11 @@ export const DIRECTIONS: Direction[] = [
     ],
   },
   {
-    id: "psh",
-    code: "ПШ",
-    name: "Освіта для дітей",
+    id: "step-school",
+    code: "STEP School",
+    name: "Приватна школа IT STEP",
     description:
-      "Приватна школа IT STEP: повна загальна середня освіта з поглибленим вивченням IT.",
+      "Повна загальна середня освіта з поглибленим вивченням IT — очно та онлайн.",
     accent: "sky",
     icon: "school",
     disciplines: ["ITSTEP SCHOOL (1–11 клас)", "Unicorn online school"],
@@ -53,7 +53,7 @@ export const DIRECTIONS: Direction[] = [
       "Мала Комп'ютерна Академія: перші кроки в IT для учнів 1–8 класів, 7–14 років.",
     accent: "emerald",
     icon: "rocket",
-    disciplines: ["Мала Комп'ютерна Академія", "ІТ Старт"],
+    disciplines: ["Мала Комп'ютерна Академія", "ПШ — Перший крок (ІТ Старт)"],
   },
   {
     id: "sk",
