@@ -7,6 +7,7 @@ import { DIRECTIONS } from "@/lib/directions";
 import DirectionCards from "@/components/DirectionCards";
 import ProgramCards from "@/components/ProgramCards";
 import { PROGRAM_PORTAL_SLUG } from "@/lib/portalMap";
+import { driveRefFor, driveViewUrl } from "@/lib/programDrive";
 import type { DriveProgram, Language, LessonFormat, MaterialType } from "@/lib/types";
 
 const DURATIONS = [45, 60, 90, 120, 180] as const;
@@ -134,6 +135,7 @@ export default function Home() {
   const currentDirection =
     DIRECTIONS.find((d) => d.id === directionId) ?? DIRECTIONS[0];
   const [product, setProduct] = useState("");
+  const boundProgram = driveRefFor(product);
   const [discipline, setDiscipline] = useState("");
   const [topic, setTopic] = useState("");
   const [durationChoice, setDurationChoice] = useState<string>("90");
@@ -518,14 +520,28 @@ export default function Home() {
               <span className="text-sm font-medium text-slate-700">
                 Програма навчання (Google Drive)
               </span>
-              {driveConfigured === false && (
-                <p className="mt-1 text-xs text-amber-600 bg-amber-50 rounded-lg px-3 py-2">
-                  Google Drive не налаштовано — генерація працюватиме без перевірки
-                  програми. Додайте GOOGLE_SERVICE_ACCOUNT_KEY і
-                  GOOGLE_DRIVE_FOLDER_ID у змінні середовища.
+              {boundProgram ? (
+                <div className="mt-1 rounded-lg bg-emerald-50 px-3 py-2 text-xs text-emerald-800">
+                  📘 Прив'язано:{" "}
+                  <a
+                    href={driveViewUrl(boundProgram)}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="font-medium underline"
+                  >
+                    {boundProgram.fileName}
+                  </a>
+                  <span className="mt-0.5 block text-emerald-700">
+                    Матеріали будуть згенеровані відповідно до цієї програми.
+                  </span>
+                </div>
+              ) : (
+                <p className="mt-1 rounded-lg bg-slate-50 px-3 py-2 text-xs text-slate-500">
+                  Для цієї програми файл навчальної програми ще не прив'язано —
+                  генерація працюватиме без нього.
                 </p>
               )}
-              {driveConfigured && (
+              {!boundProgram && driveConfigured && (
                 <>
                   <input
                     value={programFilter}
@@ -547,7 +563,7 @@ export default function Home() {
                   </select>
                 </>
               )}
-              {driveConfigured === null && (
+              {!boundProgram && driveConfigured === null && (
                 <p className="mt-1 text-xs text-slate-400">Завантажую список програм…</p>
               )}
             </div>
