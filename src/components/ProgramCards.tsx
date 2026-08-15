@@ -1,6 +1,7 @@
 "use client";
 
 import type { Direction, DirectionAccent } from "@/lib/types";
+import { driveRefFor } from "@/lib/programDrive";
 
 const ACCENT: Record<
   DirectionAccent,
@@ -97,9 +98,14 @@ export default function ProgramCards({
       >
         {initials(p)}
       </span>
-      <h3 className="flex-1 text-base font-semibold leading-snug text-slate-900">
-        {p}
-      </h3>
+      <h3 className="text-base font-semibold leading-snug text-slate-900">{p}</h3>
+      <span className="mt-2 flex-1 text-xs text-slate-400">
+        {driveRefFor(p) ? (
+          <span className="text-emerald-600">📘 Навчальна програма прив&apos;язана</span>
+        ) : (
+          ""
+        )}
+      </span>
       <span
         className={`mt-5 border-t border-slate-100 pt-3 text-sm font-semibold ${a.link}`}
       >
