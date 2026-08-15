@@ -4,6 +4,8 @@ import { DIRECTIONS } from "@/lib/directions";
 import { getProgramText, isDriveConfigured } from "@/lib/drive";
 import { buildSystemPrompt, buildUserPrompt } from "@/lib/prompts";
 import { getPortalDoc } from "@/lib/portal";
+import { driveRefFor } from "@/lib/programDrive";
+import { fetchDriveProgram } from "@/lib/driveProgramFetch";
 import type { GenerateRequest } from "@/lib/types";
 
 export const runtime = "nodejs";
@@ -91,8 +93,15 @@ export async function POST(req: NextRequest) {
   const dir = DIRECTIONS.find((d) => d.id === body.directionId);
   const direction = dir ? `${dir.code} — ${dir.name}` : body.directionId;
 
+  // 1) навчальна програма, прив'язана до продукту на Google Drive
   let program: { name: string; text: string } | undefined;
-  if (body.programFileId && isDriveConfigured()) {
+  const driveRef = driveRefFor(body.product);
+  if (driveRef) {
+    program = await fetchDriveProgram(driveRef);
+  }
+
+  // 2) або файл, обраний вручну зі спільної папки (сервісний акаунт)
+  if (!program && body.programFileId && isDriveConfigured()) {
     try {
       program = await getProgramText(body.programFileId);
     } catch (e) {
@@ -115,10 +124,14 @@ export async function POST(req: NextRequest) {
         );
       };
       try {
-        if (body.programFileId && !program) {
+        if (program) {
+          send("status", {
+            message: `📘 Навчальна програма з Google Drive: «${program.name}».`,
+          });
+        } else if (driveRef || body.programFileId) {
           send("status", {
             message:
-              "⚠️ Не вдалося прочитати програму навчання з Google Drive — генерую без неї.",
+              "⚠️ Не вдалося прочитати навчальну програму з Google Drive — генерую без неї.",
           });
         }
         if (portalDoc) {
