@@ -81,7 +81,8 @@ export function buildSystemPrompt(): string {
 export function buildUserPrompt(
   req: GenerateRequest,
   directionName: string,
-  program?: { name: string; text: string }
+  program?: { name: string; text: string },
+  portalDoc?: { title: string; text: string }
 ): string {
   const materials = req.materialTypes
     .map((t) => MATERIAL_TEMPLATES[t])
@@ -112,6 +113,24 @@ export function buildUserPrompt(
     ``,
     materials
   );
+
+  if (portalDoc) {
+    parts.push(
+      ``,
+      `---`,
+      ``,
+      `**Офіційний опис продукту «${portalDoc.title}» з внутрішнього порталу IT STEP.**`,
+      `Це першоджерело про продукт: структура програми по семестрах, технологічний стек,`,
+      `очікувані результати навчання, цільова аудиторія та її рівень. Спирайся на нього:`,
+      `матеріали мають відповідати саме цій програмі, її стеку й рівню студентів.`,
+      `Продажні блоки (заперечення, скрипти, контакти філій) — лише фоновий контекст,`,
+      `у навчальні матеріали їх не переносити.`,
+      ``,
+      portalDoc.text.length > 80000
+        ? portalDoc.text.slice(0, 80000) + "\n\n[...документ скорочено...]"
+        : portalDoc.text
+    );
+  }
 
   if (program) {
     const trimmed =
