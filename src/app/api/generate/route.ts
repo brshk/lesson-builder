@@ -3,6 +3,7 @@ import { NextRequest } from "next/server";
 import { DIRECTIONS } from "@/lib/directions";
 import { getProgramText, isDriveConfigured } from "@/lib/drive";
 import { buildSystemPrompt, buildUserPrompt } from "@/lib/prompts";
+import { getPortalDoc } from "@/lib/portal";
 import type { GenerateRequest } from "@/lib/types";
 
 export const runtime = "nodejs";
@@ -99,8 +100,11 @@ export async function POST(req: NextRequest) {
     }
   }
 
+  // Офіційний опис продукту з ПКО-порталу (зліпок або живе API)
+  const portalDoc = await getPortalDoc(body.product);
+
   const systemPrompt = buildSystemPrompt();
-  const userPrompt = buildUserPrompt(body, direction, program);
+  const userPrompt = buildUserPrompt(body, direction, program, portalDoc);
 
   const encoder = new TextEncoder();
   const stream = new ReadableStream<Uint8Array>({
@@ -115,6 +119,13 @@ export async function POST(req: NextRequest) {
           send("status", {
             message:
               "⚠️ Не вдалося прочитати програму навчання з Google Drive — генерую без неї.",
+          });
+        }
+        if (portalDoc) {
+          send("status", {
+            message: `📄 Враховано опис продукту «${portalDoc.title}» з ПКО-порталу${
+              portalDoc.live ? "" : " (збережена копія)"
+            }.`,
           });
         }
         send("status", { message: "Шукаю інформацію та генерую матеріали…" });
