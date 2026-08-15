@@ -5,6 +5,7 @@ import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { DIRECTIONS } from "@/lib/directions";
 import DirectionCards from "@/components/DirectionCards";
+import ProgramCards from "@/components/ProgramCards";
 import type { DriveProgram, Language, LessonFormat, MaterialType } from "@/lib/types";
 
 const DURATIONS = [45, 60, 90, 120, 180] as const;
@@ -125,7 +126,9 @@ export default function Home() {
   };
 
   // форма
-  const [step, setStep] = useState<"directions" | "form">("directions");
+  const [step, setStep] = useState<"directions" | "programs" | "form">(
+    "directions"
+  );
   const [directionId, setDirectionId] = useState(DIRECTIONS[0].id);
   const currentDirection =
     DIRECTIONS.find((d) => d.id === directionId) ?? DIRECTIONS[0];
@@ -352,6 +355,19 @@ export default function Home() {
             onSelect={(id) => {
               setDirectionId(id);
               setProduct("");
+              setStep("programs");
+            }}
+          />
+        </main>
+      )}
+
+      {step === "programs" && (
+        <main className="mx-auto max-w-7xl px-4 py-10">
+          <ProgramCards
+            direction={currentDirection}
+            onBack={() => setStep("directions")}
+            onSelect={(p) => {
+              setProduct(p);
               setStep("form");
             }}
           />
@@ -360,19 +376,34 @@ export default function Home() {
 
       {step === "form" && (
       <main className="mx-auto max-w-7xl px-4 py-6">
-        <button
-          type="button"
-          onClick={() => setStep("directions")}
-          className="mb-4 inline-flex items-center gap-1.5 text-sm text-slate-500 hover:text-slate-800"
-        >
-          ← Усі напрямки
-        </button>
-        <p className="mb-4 text-sm text-slate-700">
-          Напрямок:{" "}
-          <span className="font-semibold">
-            {currentDirection.code} — {currentDirection.name}
+        <div className="mb-4 flex flex-wrap items-center gap-x-3 gap-y-2 text-sm">
+          <button
+            type="button"
+            onClick={() => setStep("directions")}
+            className="text-slate-500 hover:text-slate-800"
+          >
+            Напрямки
+          </button>
+          <span className="text-slate-300">/</span>
+          <button
+            type="button"
+            onClick={() => setStep("programs")}
+            className="text-slate-500 hover:text-slate-800"
+          >
+            {currentDirection.code}
+          </button>
+          <span className="text-slate-300">/</span>
+          <span className="font-semibold text-slate-800">
+            {product || "Без прив'язки до програми"}
           </span>
-        </p>
+          <button
+            type="button"
+            onClick={() => setStep("programs")}
+            className="ml-1 rounded-md border border-slate-300 px-2 py-0.5 text-xs text-slate-500 hover:bg-slate-100"
+          >
+            Змінити
+          </button>
+        </div>
         <div className="grid gap-6 lg:grid-cols-[420px_1fr]">
         {/* ФОРМА */}
         <section className="space-y-5">
@@ -435,41 +466,26 @@ export default function Home() {
           <div className="rounded-xl bg-white p-5 shadow-sm border border-slate-200 space-y-4">
             <h2 className="font-semibold text-slate-800">Параметри заняття</h2>
 
-            <label className="block">
-              <span className="text-sm font-medium text-slate-700">Напрямок</span>
-              <select
-                value={directionId}
-                onChange={(e) => {
-                  setDirectionId(e.target.value);
-                  setProduct("");
-                }}
-                className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-sky-500 focus:outline-none"
+            <div className="rounded-lg bg-slate-50 px-3 py-2.5 text-sm">
+              <p className="text-slate-500">
+                Напрямок:{" "}
+                <span className="font-medium text-slate-800">
+                  {currentDirection.code} — {currentDirection.name}
+                </span>
+              </p>
+              {product && (
+                <p className="mt-0.5 text-slate-500">
+                  Програма: <span className="font-medium text-slate-800">{product}</span>
+                </p>
+              )}
+              <button
+                type="button"
+                onClick={() => setStep("programs")}
+                className="mt-1.5 text-xs text-sky-600 underline hover:text-sky-700"
               >
-                {DIRECTIONS.map((d) => (
-                  <option key={d.id} value={d.id}>
-                    {d.code} — {d.name}
-                  </option>
-                ))}
-              </select>
-            </label>
-
-            {(currentDirection.disciplines?.length ?? 0) > 0 && (
-              <label className="block">
-                <span className="text-sm font-medium text-slate-700">Продукт / курс</span>
-                <select
-                  value={product}
-                  onChange={(e) => setProduct(e.target.value)}
-                  className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-sky-500 focus:outline-none"
-                >
-                  <option value="">— не вказувати —</option>
-                  {(currentDirection.disciplines ?? []).map((p) => (
-                    <option key={p} value={p}>
-                      {p}
-                    </option>
-                  ))}
-                </select>
-              </label>
-            )}
+                Змінити напрямок або програму
+              </button>
+            </div>
 
             <label className="block">
               <span className="text-sm font-medium text-slate-700">Дисципліна *</span>
