@@ -14,6 +14,42 @@ export const dynamic = "force-dynamic";
  */
 export async function GET(req: NextRequest) {
   const product = req.nextUrl.searchParams.get("product");
+  const fileId = req.nextUrl.searchParams.get("fileId");
+
+  // Перевірка довільного файлу: /api/program-check?fileId=<id>&kind=docx|gdoc|pdf|gsheet
+  if (fileId) {
+    const kindParam = req.nextUrl.searchParams.get("kind") || "docx";
+    const kind = (["gdoc", "docx", "pdf"].includes(kindParam)
+      ? kindParam
+      : "docx") as "gdoc" | "docx" | "pdf";
+    const ref = {
+      fileId,
+      fileName: req.nextUrl.searchParams.get("name") || fileId,
+      kind,
+      folder: "",
+    };
+    const started = Date.now();
+    const doc = await fetchDriveProgram(ref);
+    return NextResponse.json(
+      doc
+        ? {
+            ok: true,
+            fileId,
+            kind,
+            chars: doc.text.length,
+            ms: Date.now() - started,
+            preview: doc.text.slice(0, 400),
+          }
+        : {
+            ok: false,
+            fileId,
+            kind,
+            error:
+              "Не вдалося прочитати — найімовірніше, файл не відкритий «за посиланням»",
+          },
+      { status: doc ? 200 : 502 }
+    );
+  }
 
   if (!product) {
     return NextResponse.json({
