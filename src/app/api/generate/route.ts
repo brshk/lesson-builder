@@ -15,7 +15,24 @@ const CLAUDE_MODEL = process.env.ANTHROPIC_MODEL || "claude-sonnet-4-5";
 const GEMINI_MODEL = process.env.GEMINI_MODEL || "gemini-2.5-flash";
 const OPENAI_MODEL = process.env.OPENAI_MODEL || "gpt-5.5";
 
-type Provider = "claude" | "gemini" | "openai";
+type Provider = "claude" | "gemini" | "openai" | "free";
+
+/** Скільки безкоштовних генерацій на день дозволено одному викладачу. */
+const FREE_DAILY_LIMIT = Number(process.env.FREE_DAILY_LIMIT || 5);
+const FREE_COOKIE = "lb_free_used";
+
+function readFreeUsage(req: NextRequest): number {
+  const raw = req.cookies.get(FREE_COOKIE)?.value;
+  if (!raw) return 0;
+  const [day, n] = raw.split(":");
+  const today = new Date().toISOString().slice(0, 10);
+  return day === today ? Number(n) || 0 : 0;
+}
+
+function freeUsageCookie(used: number): string {
+  const today = new Date().toISOString().slice(0, 10);
+  return `${FREE_COOKIE}=${today}:${used}; Path=/; Max-Age=86400; SameSite=Lax`;
+}
 
 /** Перетворює технічні помилки провайдерів на зрозумілі повідомлення. */
 function friendlyError(raw: string): string {
@@ -48,6 +65,7 @@ const ENV_KEY_BY_PROVIDER: Record<Provider, string | undefined> = {
   claude: process.env.ANTHROPIC_API_KEY,
   gemini: process.env.GEMINI_API_KEY,
   openai: process.env.OPENAI_API_KEY,
+  free: process.env.GEMINI_API_KEY,
 };
 
 const KEY_HINT: Record<Provider, string> = {
@@ -55,21 +73,46 @@ const KEY_HINT: Record<Provider, string> = {
   gemini:
     "Введіть свій безкоштовний ключ Gemini (aistudio.google.com/apikey) у полі угорі форми.",
   openai: "Введіть свій ключ OpenAI (platform.openai.com/api-keys) у полі угорі форми.",
+  free:
+    "Безкоштовний режим ще не налаштовано адміністратором: у змінних середовища Vercel має бути GEMINI_API_KEY.",
 };
 
 export async function POST(req: NextRequest) {
   const providerHeader = req.headers.get("x-provider");
   const provider: Provider =
-    providerHeader === "gemini" || providerHeader === "openai"
+    providerHeader === "gemini" ||
+    providerHeader === "openai" ||
+    providerHeader === "free"
       ? providerHeader
       : "claude";
-  const userApiKey = req.headers.get("x-user-api-key")?.trim();
+
+  // Безкоштовний режим — спільний ключ академії + денний ліміт на браузер
+  let freeUsed = 0;
+  if (provider === "free") {
+    freeUsed = readFreeUsage(req);
+    if (freeUsed >= FREE_DAILY_LIMIT) {
+      return new Response(
+        JSON.stringify({
+          error: `Вичерпано денний ліміт безкоштовних генерацій (${FREE_DAILY_LIMIT} на добу). Спробуйте завтра або скористайтеся власним ключем — вкладка Gemini (безкоштовний ключ), ChatGPT чи Claude.`,
+        }),
+        { status: 429, headers: { "Content-Type": "application/json" } }
+      );
+    }
+  }
+
+  const userApiKey =
+    provider === "free" ? undefined : req.headers.get("x-user-api-key")?.trim();
   const apiKey = userApiKey || ENV_KEY_BY_PROVIDER[provider];
 
   if (!apiKey) {
     return new Response(
-      JSON.stringify({ error: `Не вказано API-ключ. ${KEY_HINT[provider]}` }),
-      { status: 401, headers: { "Content-Type": "application/json" } }
+      JSON.stringify({
+        error:
+          provider === "free"
+            ? KEY_HINT.free
+            : `Не вказано API-ключ. ${KEY_HINT[provider]}`,
+      }),
+      { status: provider === "free" ? 503 : 401, headers: { "Content-Type": "application/json" } }
     );
   }
 
@@ -143,9 +186,17 @@ export async function POST(req: NextRequest) {
         }
         send("status", { message: "Шукаю інформацію та генерую матеріали…" });
 
+        if (provider === "free") {
+          send("status", {
+            message: `🎁 Безкоштовний режим: залишилось генерацій сьогодні — ${
+              FREE_DAILY_LIMIT - freeUsed - 1
+            } із ${FREE_DAILY_LIMIT}.`,
+          });
+        }
+
         if (provider === "claude") {
           await generateWithClaude(apiKey, systemPrompt, userPrompt, send);
-        } else if (provider === "gemini") {
+        } else if (provider === "gemini" || provider === "free") {
           await generateWithGemini(apiKey, systemPrompt, userPrompt, send);
         } else {
           await generateWithOpenAI(apiKey, systemPrompt, userPrompt, send);
@@ -160,13 +211,16 @@ export async function POST(req: NextRequest) {
     },
   });
 
-  return new Response(stream, {
-    headers: {
-      "Content-Type": "text/event-stream; charset=utf-8",
-      "Cache-Control": "no-cache, no-transform",
-      Connection: "keep-alive",
-    },
-  });
+  const headers: Record<string, string> = {
+    "Content-Type": "text/event-stream; charset=utf-8",
+    "Cache-Control": "no-cache, no-transform",
+    Connection: "keep-alive",
+  };
+  if (provider === "free") {
+    headers["Set-Cookie"] = freeUsageCookie(freeUsed + 1);
+  }
+
+  return new Response(stream, { headers });
 }
 
 type SendFn = (event: string, data: unknown) => void;
