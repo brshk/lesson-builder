@@ -80,6 +80,36 @@ export default function ProgramCards({
 }) {
   const a = ACCENT[direction.accent];
   const programs = direction.disciplines ?? [];
+  const groups =
+    direction.groups && direction.groups.length > 0
+      ? direction.groups
+      : [{ title: "", programs }];
+
+  const card = (p: string) => (
+    <button
+      key={p}
+      type="button"
+      onClick={() => onSelect(p)}
+      className={`group flex flex-col rounded-2xl border border-slate-200 bg-white p-5 text-left shadow-sm transition hover:shadow-md ${a.ring}`}
+    >
+      <span
+        className={`mb-4 inline-flex h-10 w-10 items-center justify-center rounded-lg text-sm font-bold ${a.badgeBg} ${a.badgeText}`}
+      >
+        {initials(p)}
+      </span>
+      <h3 className="flex-1 text-base font-semibold leading-snug text-slate-900">
+        {p}
+      </h3>
+      <span
+        className={`mt-5 border-t border-slate-100 pt-3 text-sm font-semibold ${a.link}`}
+      >
+        Обрати програму
+        <span className="ml-1.5 inline-block transition-transform group-hover:translate-x-1">
+          →
+        </span>
+      </span>
+    </button>
+  );
 
   return (
     <section>
@@ -119,33 +149,24 @@ export default function ProgramCards({
         </div>
       ) : (
         <>
-          <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            {programs.map((p) => (
-              <button
-                key={p}
-                type="button"
-                onClick={() => onSelect(p)}
-                className={`group flex flex-col rounded-2xl border border-slate-200 bg-white p-5 text-left shadow-sm transition hover:shadow-md ${a.ring}`}
-              >
-                <span
-                  className={`mb-4 inline-flex h-10 w-10 items-center justify-center rounded-lg text-sm font-bold ${a.badgeBg} ${a.badgeText}`}
-                >
-                  {initials(p)}
-                </span>
-                <h3 className="flex-1 text-base font-semibold leading-snug text-slate-900">
-                  {p}
-                </h3>
-                <span
-                  className={`mt-5 border-t border-slate-100 pt-3 text-sm font-semibold ${a.link}`}
-                >
-                  Обрати програму
-                  <span className="ml-1.5 inline-block transition-transform group-hover:translate-x-1">
-                    →
+          {groups.map((g) => (
+            <div key={g.title || "all"} className="mt-8 first:mt-6">
+              {g.title && (
+                <div className="mb-3 flex items-center gap-3">
+                  <h3 className="text-sm font-bold uppercase tracking-wide text-slate-500">
+                    {g.title}
+                  </h3>
+                  <span className="text-xs text-slate-400">
+                    {g.programs.length}
                   </span>
-                </span>
-              </button>
-            ))}
-          </div>
+                  <span className="h-px flex-1 bg-slate-200" />
+                </div>
+              )}
+              <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                {g.programs.map(card)}
+              </div>
+            </div>
+          ))}
 
           <button
             type="button"
