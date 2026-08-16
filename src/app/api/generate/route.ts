@@ -64,7 +64,7 @@ function friendlyError(raw: string): string {
     return "Недостатньо коштів на акаунті OpenAI. Поповніть баланс: platform.openai.com → Billing.";
   }
   if (lower.includes("resource_exhausted") || lower.includes("quota")) {
-    return "Вичерпано безкоштовний денний ліміт Gemini. Спробуйте пізніше (ліміт оновлюється щодня) або скористайтеся іншим провайдером.";
+    return "Вичерпано денний ліміт безкоштовного тарифу Google. Спробуйте пізніше (ліміт оновлюється щодня) або скористайтеся власним ключем — вкладки Gemini, ChatGPT чи Claude.";
   }
   if (lower.includes("overloaded")) {
     return "Сервіс перевантажений. Зачекайте хвилину та спробуйте ще раз.";
@@ -341,36 +341,53 @@ async function generateWithGemini(
   userPrompt: string,
   send: SendFn
 ) {
-  const body = JSON.stringify({
-    systemInstruction: { parts: [{ text: systemPrompt }] },
-    contents: [{ role: "user", parts: [{ text: userPrompt }] }],
-    tools: [{ google_search: {} }],
-    generationConfig: { maxOutputTokens: 32768 },
-  });
+  const makeBody = (withSearch: boolean) =>
+    JSON.stringify({
+      systemInstruction: { parts: [{ text: systemPrompt }] },
+      contents: [{ role: "user", parts: [{ text: userPrompt }] }],
+      ...(withSearch ? { tools: [{ google_search: {} }] } : {}),
+      generationConfig: { maxOutputTokens: 32768 },
+    });
 
-  // Пробуємо моделі по черзі: недоступну Google віддає як 404/400
+  /**
+   * Пробуємо: (модель × з пошуком) → (модель × без пошуку).
+   * Google-пошук недоступний на безкоштовному тарифі (429),
+   * а старі моделі закриті для нових ключів (404) — обидва випадки обходимо.
+   */
   let resp: Response | undefined;
   let lastErr = "";
-  for (const model of GEMINI_MODELS) {
-    const r = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/${model}:streamGenerateContent?alt=sse`,
-      {
-        method: "POST",
-        headers: { "Content-Type": "application/json", "x-goog-api-key": apiKey },
-        body,
+  let searchOff = false;
+
+  outer: for (const withSearch of [true, false]) {
+    for (const model of GEMINI_MODELS) {
+      const r = await fetch(
+        `https://generativelanguage.googleapis.com/v1beta/models/${model}:streamGenerateContent?alt=sse`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json", "x-goog-api-key": apiKey },
+          body: makeBody(withSearch),
+        }
+      );
+      if (r.ok && r.body) {
+        resp = r;
+        searchOff = !withSearch;
+        break outer;
       }
-    );
-    if (r.ok && r.body) {
-      resp = r;
-      break;
+      lastErr = await r.text().catch(() => `${r.status}`);
+      // 401/403 — проблема з ключем, перебирати далі немає сенсу
+      if (r.status === 401 || r.status === 403) break outer;
     }
-    lastErr = await r.text().catch(() => `${r.status}`);
-    // якщо проблема не в моделі (ключ, квота) — далі перебирати немає сенсу
-    if (r.status !== 404 && r.status !== 400) break;
   }
 
   if (!resp || !resp.body) {
     throw new Error(lastErr || "Gemini API error");
+  }
+
+  if (searchOff) {
+    send("status", {
+      message:
+        "ℹ️ Веб-пошук недоступний на безкоштовному тарифі Google — матеріали побудовано на навчальній програмі, описі продукту та знаннях моделі.",
+    });
   }
 
   const reader = resp.body.getReader();
