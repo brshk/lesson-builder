@@ -299,40 +299,43 @@ async function generateWithOpenAI(
   let buffer = "";
   let searchAnnounced = false;
 
+  const handleLine = (line: string) => {
+    if (!line.startsWith("data:")) return;
+    const payload = line.slice(5).trim();
+    if (!payload || payload === "[DONE]") return;
+    try {
+      const chunk = JSON.parse(payload);
+      if (chunk.type === "response.output_text.delta" && chunk.delta) {
+        send("text", { text: chunk.delta });
+      } else if (
+        !searchAnnounced &&
+        typeof chunk.type === "string" &&
+        chunk.type.startsWith("response.web_search_call")
+      ) {
+        searchAnnounced = true;
+        send("status", { message: "🔎 Виконую веб-пошук…" });
+      } else if (chunk.type === "error" || chunk.type === "response.failed") {
+        const msg =
+          chunk.error?.message ?? chunk.response?.error?.message ?? "Помилка OpenAI";
+        throw new Error(msg);
+      }
+    } catch (e) {
+      // прокидаємо лише справжні помилки, а не неповні JSON-фрагменти
+      if (e instanceof Error && !(e instanceof SyntaxError)) throw e;
+    }
+  };
+
   while (true) {
     const { done, value } = await reader.read();
     if (done) break;
     buffer += decoder.decode(value, { stream: true });
     const lines = buffer.split("\n");
     buffer = lines.pop() ?? "";
-    for (const line of lines) {
-      if (!line.startsWith("data:")) continue;
-      const payload = line.slice(5).trim();
-      if (!payload || payload === "[DONE]") continue;
-      try {
-        const chunk = JSON.parse(payload);
-        if (chunk.type === "response.output_text.delta" && chunk.delta) {
-          send("text", { text: chunk.delta });
-        } else if (
-          !searchAnnounced &&
-          typeof chunk.type === "string" &&
-          chunk.type.startsWith("response.web_search_call")
-        ) {
-          searchAnnounced = true;
-          send("status", { message: "🔎 Виконую веб-пошук…" });
-        } else if (chunk.type === "error" || chunk.type === "response.failed") {
-          const msg =
-            chunk.error?.message ??
-            chunk.response?.error?.message ??
-            "Помилка OpenAI";
-          throw new Error(msg);
-        }
-      } catch (e) {
-        // прокидаємо лише справжні помилки, а не неповні JSON-фрагменти
-        if (e instanceof Error && !(e instanceof SyntaxError)) throw e;
-      }
-    }
+    for (const line of lines) handleLine(line);
   }
+  // фінальний рядок без \n наприкінці — інакше губиться кінець відповіді
+  buffer += decoder.decode();
+  for (const line of buffer.split("\n")) handleLine(line);
 }
 
 async function generateWithGemini(
@@ -412,36 +415,42 @@ async function generateWithGemini(
   let finishReason = "";
   let gotText = false;
 
+  const handleLine = (line: string) => {
+    if (!line.startsWith("data:")) return;
+    const payload = line.slice(5).trim();
+    if (!payload || payload === "[DONE]") return;
+    try {
+      const chunk = JSON.parse(payload);
+      const candidate = chunk.candidates?.[0];
+      const parts = candidate?.content?.parts ?? [];
+      for (const part of parts) {
+        if (part.text) {
+          gotText = true;
+          send("text", { text: part.text });
+        }
+      }
+      if (candidate?.finishReason) finishReason = candidate.finishReason;
+      if (!searchAnnounced && candidate?.groundingMetadata) {
+        searchAnnounced = true;
+        send("status", { message: "🔎 Використано пошук Google…" });
+      }
+    } catch {
+      // неповний JSON-фрагмент — ігноруємо
+    }
+  };
+
   while (true) {
     const { done, value } = await reader.read();
     if (done) break;
     buffer += decoder.decode(value, { stream: true });
     const lines = buffer.split("\n");
     buffer = lines.pop() ?? "";
-    for (const line of lines) {
-      if (!line.startsWith("data:")) continue;
-      const payload = line.slice(5).trim();
-      if (!payload || payload === "[DONE]") continue;
-      try {
-        const chunk = JSON.parse(payload);
-        const candidate = chunk.candidates?.[0];
-        const parts = candidate?.content?.parts ?? [];
-        for (const part of parts) {
-          if (part.text) {
-            gotText = true;
-            send("text", { text: part.text });
-          }
-        }
-        if (candidate?.finishReason) finishReason = candidate.finishReason;
-        if (!searchAnnounced && candidate?.groundingMetadata) {
-          searchAnnounced = true;
-          send("status", { message: "🔎 Використано пошук Google…" });
-        }
-      } catch {
-        // неповний JSON-фрагмент — ігноруємо
-      }
-    }
+    for (const line of lines) handleLine(line);
   }
+  // ВАЖЛИВО: останній рядок лишається в буфері без \n наприкінці —
+  // саме в ньому приходить фінальний фрагмент тексту й finishReason
+  buffer += decoder.decode();
+  for (const line of buffer.split("\n")) handleLine(line);
 
   if (finishReason === "MAX_TOKENS") {
     send("status", {
