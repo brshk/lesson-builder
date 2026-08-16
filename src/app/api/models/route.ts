@@ -3,7 +3,12 @@ import { NextRequest, NextResponse } from "next/server";
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
-async function probe(key: string, model: string, withSearch: boolean) {
+async function probe(
+  key: string,
+  model: string,
+  withSearch: boolean,
+  thinking?: Record<string, unknown>
+) {
   const res = await fetch(
     `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`,
     {
@@ -12,7 +17,10 @@ async function probe(key: string, model: string, withSearch: boolean) {
       body: JSON.stringify({
         contents: [{ role: "user", parts: [{ text: "Скажи 'ок'" }] }],
         ...(withSearch ? { tools: [{ google_search: {} }] } : {}),
-        generationConfig: { maxOutputTokens: 20 },
+        generationConfig: {
+          maxOutputTokens: 20,
+          ...(thinking ? { thinkingConfig: thinking } : {}),
+        },
       }),
     }
   );
@@ -30,7 +38,14 @@ export async function GET(req: NextRequest) {
   // /api/models?test=<model> — пробний виклик із пошуком і без нього
   const test = req.nextUrl.searchParams.get("test");
   if (test) {
-    const model = test === "1" ? "gemini-flash-latest" : test;
+    const model = test === "1" ? "gemini-3.7-flash" : test;
+    if (req.nextUrl.searchParams.get("think")) {
+      const [level, budget] = await Promise.all([
+        probe(key, model, false, { thinkingLevel: "high" }),
+        probe(key, model, false, { thinkingBudget: 4096 }),
+      ]);
+      return NextResponse.json({ thinkingLevel: level, thinkingBudget: budget });
+    }
     const [plain, withSearch] = await Promise.all([
       probe(key, model, false),
       probe(key, model, true),
