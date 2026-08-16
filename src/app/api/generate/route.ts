@@ -19,10 +19,10 @@ const CLAUDE_MODEL = process.env.ANTHROPIC_MODEL || "claude-sonnet-4-5";
 const GEMINI_MODELS = process.env.GEMINI_MODEL
   ? [process.env.GEMINI_MODEL]
   : [
+      "gemini-3.7-flash",
+      "gemini-3.5-flash",
       "gemini-flash-latest",
       "gemini-2.5-flash",
-      "gemini-2.0-flash",
-      "gemini-flash-lite-latest",
     ];
 const OPENAI_MODEL = process.env.OPENAI_MODEL || "gpt-5.5";
 
@@ -341,42 +341,55 @@ async function generateWithGemini(
   userPrompt: string,
   send: SendFn
 ) {
-  const makeBody = (withSearch: boolean) =>
+  const makeBody = (withSearch: boolean, withThinking: boolean) =>
     JSON.stringify({
       systemInstruction: { parts: [{ text: systemPrompt }] },
       contents: [{ role: "user", parts: [{ text: userPrompt }] }],
       ...(withSearch ? { tools: [{ google_search: {} }] } : {}),
-      generationConfig: { maxOutputTokens: 32768 },
+      generationConfig: {
+        maxOutputTokens: 32768,
+        temperature: 0.7,
+        ...(withThinking ? { thinkingConfig: { thinkingLevel: "high" } } : {}),
+      },
     });
 
   /**
-   * Пробуємо: (модель × з пошуком) → (модель × без пошуку).
-   * Google-пошук недоступний на безкоштовному тарифі (429),
-   * а старі моделі закриті для нових ключів (404) — обидва випадки обходимо.
+   * Порядок спроб (перша успішна виграє):
+   *  1. найкраща модель + веб-пошук + режим міркувань   — платний ключ
+   *  2. найкраща модель + міркування, без пошуку        — безкоштовний тариф
+   *  3. найкраща модель без нічого                      — якщо thinking не підтримується
+   *  4+. запасні моделі                                 — якщо основну закрито (404)
+   * Пошук на безкоштовному тарифі дає 429, старі моделі — 404; обидва обходимо.
    */
+  const [best, ...fallbacks] = GEMINI_MODELS;
+  const attempts: { model: string; search: boolean; think: boolean }[] = [
+    { model: best, search: true, think: true },
+    { model: best, search: false, think: true },
+    { model: best, search: false, think: false },
+    ...fallbacks.map((m) => ({ model: m, search: false, think: false })),
+  ];
+
   let resp: Response | undefined;
   let lastErr = "";
   let searchOff = false;
 
-  outer: for (const withSearch of [true, false]) {
-    for (const model of GEMINI_MODELS) {
-      const r = await fetch(
-        `https://generativelanguage.googleapis.com/v1beta/models/${model}:streamGenerateContent?alt=sse`,
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json", "x-goog-api-key": apiKey },
-          body: makeBody(withSearch),
-        }
-      );
-      if (r.ok && r.body) {
-        resp = r;
-        searchOff = !withSearch;
-        break outer;
+  for (const a of attempts) {
+    const r = await fetch(
+      `https://generativelanguage.googleapis.com/v1beta/models/${a.model}:streamGenerateContent?alt=sse`,
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "x-goog-api-key": apiKey },
+        body: makeBody(a.search, a.think),
       }
-      lastErr = await r.text().catch(() => `${r.status}`);
-      // 401/403 — проблема з ключем, перебирати далі немає сенсу
-      if (r.status === 401 || r.status === 403) break outer;
+    );
+    if (r.ok && r.body) {
+      resp = r;
+      searchOff = !a.search;
+      break;
     }
+    lastErr = await r.text().catch(() => `${r.status}`);
+    // 401/403 — проблема з ключем, перебирати далі немає сенсу
+    if (r.status === 401 || r.status === 403) break;
   }
 
   if (!resp || !resp.body) {
