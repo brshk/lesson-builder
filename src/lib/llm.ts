@@ -23,7 +23,19 @@ export const OPENAI_MODEL = process.env.OPENAI_MODEL || "gpt-5.5";
  */
 export const GEMINI_MODELS = process.env.GEMINI_MODEL
   ? [process.env.GEMINI_MODEL]
-  : ["gemini-3.7-flash", "gemini-3.5-flash", "gemini-flash-latest", "gemini-2.5-flash"];
+  : ["gemini-3.7-flash", "gemini-3.5-flash", "gemini-flash-latest"];
+
+/**
+ * Помилка «модель закрито для нових ключів» нецікава користувачу: якщо ми
+ * дійшли до запасної моделі, справжня причина — у першій помилці (найчастіше
+ * 429 «вичерпано квоту»). Тому серед усіх спроб обираємо найзмістовнішу.
+ */
+function pickMeaningfulError(errors: string[]): string {
+  const quota = errors.find((e) => /quota|resource_exhausted|429/i.test(e));
+  if (quota) return quota;
+  const notModelDeath = errors.find((e) => !/no longer available/i.test(e));
+  return notModelDeath || errors[0] || "";
+}
 
 export const ENV_KEY_BY_PROVIDER: Record<Provider, string | undefined> = {
   claude: process.env.ANTHROPIC_API_KEY,
@@ -71,6 +83,9 @@ export function friendlyError(raw: string): string {
   }
   if (lower.includes("resource_exhausted") || lower.includes("quota")) {
     return "Вичерпано денний ліміт безкоштовного тарифу Google. Спробуйте пізніше (ліміт оновлюється щодня) або скористайтеся власним ключем — вкладки Gemini, ChatGPT чи Claude.";
+  }
+  if (lower.includes("no longer available")) {
+    return "Обрану модель Gemini закрито для нових ключів. Адміністратору варто оновити змінну GEMINI_MODEL у налаштуваннях Vercel.";
   }
   if (lower.includes("overloaded")) {
     return "Сервіс перевантажений. Зачекайте хвилину та спробуйте ще раз.";
@@ -387,7 +402,7 @@ async function streamGemini({
   const baseContents: Turn[] = [{ role: "user", parts: [{ text: user }] }];
   let chosen: (typeof attempts)[number] | undefined;
   let first: Awaited<ReturnType<typeof runStream>> | undefined;
-  let lastErr = "";
+  const errors: string[] = [];
 
   for (const a of attempts) {
     const res = await runStream(baseContents, a.search, a.think, a.model);
@@ -396,11 +411,11 @@ async function streamGemini({
       first = res;
       break;
     }
-    lastErr = res.err || `${res.status}`;
+    errors.push(res.err || `${res.status}`);
     if (res.status === 401 || res.status === 403) break;
   }
 
-  if (!chosen || !first) throw new Error(lastErr || "Gemini API error");
+  if (!chosen || !first) throw new Error(pickMeaningfulError(errors) || "Gemini API error");
 
   if (search && !chosen.search) {
     send("status", {
@@ -519,7 +534,7 @@ export async function generateJson<T>(opts: {
   }
 
   // gemini / free
-  let lastErr = "";
+  const errors: string[] = [];
   for (const model of GEMINI_MODELS) {
     const r = await fetch(
       `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`,
@@ -538,7 +553,7 @@ export async function generateJson<T>(opts: {
       }
     );
     if (!r.ok) {
-      lastErr = (await r.text().catch(() => "")) || `${r.status}`;
+      errors.push((await r.text().catch(() => "")) || `${r.status}`);
       if (r.status === 401 || r.status === 403) break;
       continue;
     }
@@ -547,10 +562,10 @@ export async function generateJson<T>(opts: {
       data.candidates?.[0]?.content?.parts?.map((p: { text?: string }) => p.text ?? "").join("") ??
       "";
     if (!text) {
-      lastErr = "порожня відповідь моделі";
+      errors.push("порожня відповідь моделі");
       continue;
     }
     return parseJsonLoose<T>(text);
   }
-  throw new Error(lastErr || "Gemini API error");
+  throw new Error(pickMeaningfulError(errors) || "Gemini API error");
 }
