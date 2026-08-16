@@ -64,11 +64,21 @@ export async function GET(req: NextRequest) {
       );
     }
     const data = (await res.json()) as {
-      models?: { name: string; supportedGenerationMethods?: string[] }[];
+      models?: {
+        name: string;
+        supportedGenerationMethods?: string[];
+        inputTokenLimit?: number;
+        outputTokenLimit?: number;
+      }[];
     };
     const usable = (data.models ?? [])
       .filter((m) => m.supportedGenerationMethods?.includes("generateContent"))
-      .map((m) => m.name.replace("models/", ""));
+      .map(
+        (m) =>
+          `${m.name.replace("models/", "")} (in ${m.inputTokenLimit ?? "?"} / out ${
+            m.outputTokenLimit ?? "?"
+          })`
+      );
     return NextResponse.json({
       ok: true,
       current: process.env.GEMINI_MODEL || "(default у коді)",
