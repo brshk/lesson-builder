@@ -102,6 +102,13 @@ const uk = {
     "Заповніть параметри заняття зліва та натисніть «Згенерувати матеріали»",
 
   interfaceLanguage: "Мова інтерфейсу",
+  toHome: "На головну",
+
+  footerRights:
+    "Усі права захищені. Навчальні програми, описи продуктів і фірмовий шаблон заняття є власністю IT STEP Academy й використовуються лише для внутрішньої підготовки занять.",
+  footerDisclaimer:
+    "Матеріали створює штучний інтелект — перевіряйте факти, код і таймінг перед заняттям.",
+  footerContact: "Зворотний звʼязок",
 
   course: "Курс",
   courseAny: "— усі курси напрямку —",
@@ -215,6 +222,13 @@ const ru: Dict = {
     "Заполните параметры занятия слева и нажмите «Сгенерировать материалы»",
 
   interfaceLanguage: "Язык интерфейса",
+  toHome: "На главную",
+
+  footerRights:
+    "Все права защищены. Учебные программы, описания продуктов и фирменный шаблон занятия являются собственностью IT STEP Academy и используются только для внутренней подготовки занятий.",
+  footerDisclaimer:
+    "Материалы создаёт искусственный интеллект — проверяйте факты, код и тайминг перед занятием.",
+  footerContact: "Обратная связь",
 
   course: "Курс",
   courseAny: "— все курсы направления —",
@@ -326,6 +340,13 @@ const en: Dict = {
     "Fill in the lesson settings on the left and click “Generate materials”",
 
   interfaceLanguage: "Interface language",
+  toHome: "Go to home page",
+
+  footerRights:
+    "All rights reserved. Curricula, product descriptions and the lesson template are the property of IT STEP Academy and are used solely for internal lesson preparation.",
+  footerDisclaimer:
+    "Materials are AI-generated — verify facts, code and timing before class.",
+  footerContact: "Get in touch",
 
   course: "Course",
   courseAny: "— all courses in this track —",
