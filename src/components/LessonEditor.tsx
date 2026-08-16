@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useRef, useState } from "react";
+import { memo, useMemo, useRef, useState } from "react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { cleanEditedBlock, joinBlocks, splitBlocks } from "@/lib/blocks";
@@ -20,6 +20,19 @@ const ACTIONS: { id: EditAction; key: UiKey; icon: string }[] = [
   { id: "replace-paid", key: "actReplacePaid", icon: "🆓" },
   { id: "regenerate", key: "actRegenerate", icon: "↻" },
 ];
+
+/**
+ * Рендер markdown винесено в мемоїзований компонент: під час стрімінгу правки
+ * стан оновлюється десятки разів на секунду, і без memo React переparsив би
+ * markdown УСІХ блоків на кожен чанк — на великому конспекті це підвішує вкладку.
+ */
+const Markdown = memo(function Markdown({ text }: { text: string }) {
+  return (
+    <div className="prose-output text-sm">
+      <ReactMarkdown remarkPlugins={[remarkGfm]}>{text}</ReactMarkdown>
+    </div>
+  );
+});
 
 export interface LessonMeta {
   discipline: string;
@@ -223,8 +236,8 @@ export default function LessonEditor({
 
       {/* документ поблоково */}
       {docBusy && buffer ? (
-        <div className="prose-output text-sm opacity-70">
-          <ReactMarkdown remarkPlugins={[remarkGfm]}>{buffer}</ReactMarkdown>
+        <div className="opacity-70">
+          <Markdown text={buffer} />
         </div>
       ) : (
         blocks.map((b) => {
@@ -255,18 +268,14 @@ export default function LessonEditor({
               </div>
 
               {isBusy ? (
-                <div className="prose-output text-sm">
+                <>
                   <p className="mb-2 animate-pulse text-xs text-sky-600">
                     {tr(lang, "editingBlock")}
                   </p>
-                  <ReactMarkdown remarkPlugins={[remarkGfm]}>
-                    {buffer || b.text}
-                  </ReactMarkdown>
-                </div>
+                  <Markdown text={buffer || b.text} />
+                </>
               ) : (
-                <div className="prose-output text-sm">
-                  <ReactMarkdown remarkPlugins={[remarkGfm]}>{b.text}</ReactMarkdown>
-                </div>
+                <Markdown text={b.text} />
               )}
             </section>
           );
