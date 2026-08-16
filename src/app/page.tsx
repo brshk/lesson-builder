@@ -8,10 +8,20 @@ import DirectionCards from "@/components/DirectionCards";
 import ProgramCards from "@/components/ProgramCards";
 import Footer from "@/components/Footer";
 import Logo from "@/components/Logo";
+import GroupPanel from "@/components/GroupPanel";
+import LessonEditor from "@/components/LessonEditor";
+import CompliancePanel from "@/components/CompliancePanel";
+import { streamSse } from "@/lib/sseClient";
 import { PROGRAM_PORTAL_SLUG } from "@/lib/portalMap";
 import { coursesFor, driveRefFor, driveViewUrl } from "@/lib/programDrive";
 import { UI_LANGS, directionName, tr, type UiKey, type UiLang } from "@/lib/i18n";
-import type { DriveProgram, Language, LessonFormat, MaterialType } from "@/lib/types";
+import type {
+  DriveProgram,
+  GroupContext,
+  Language,
+  LessonFormat,
+  MaterialType,
+} from "@/lib/types";
 
 const DURATIONS = [45, 60, 90, 120, 180] as const;
 
@@ -171,6 +181,7 @@ export default function Home() {
   const [extraContext, setExtraContext] = useState("");
   const [tools, setTools] = useState("");
   const [materialTypes, setMaterialTypes] = useState<MaterialType[]>(["scenario"]);
+  const [group, setGroup] = useState<GroupContext>({});
 
   // відновлюємо мову інтерфейсу та синхронізуємо мову генерації
   useEffect(() => {
@@ -270,6 +281,14 @@ export default function Home() {
     setStatusMessage("");
   };
 
+  const requestHeaders = useMemo(
+    () => ({
+      "x-provider": provider,
+      ...(apiKey.trim() ? { "x-user-api-key": apiKey.trim() } : {}),
+    }),
+    [provider, apiKey]
+  );
+
   const generate = useCallback(async () => {
     setPhase("generating");
     setOutput("");
@@ -280,15 +299,9 @@ export default function Home() {
     abortRef.current = controller;
 
     try {
-      const res = await fetch("/api/generate", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "x-provider": provider,
-          ...(apiKey.trim() ? { "x-user-api-key": apiKey.trim() } : {}),
-        },
-        signal: controller.signal,
-        body: JSON.stringify({
+      await streamSse(
+        "/api/generate",
+        {
           directionId,
           product: effectiveProduct || undefined,
           discipline: discipline.trim(),
@@ -300,47 +313,18 @@ export default function Home() {
           tools,
           materialTypes,
           programFileId: programFileId || undefined,
-        }),
-      });
-
-      if (!res.ok || !res.body) {
-        const data = await res.json().catch(() => null);
-        throw new Error(data?.error || `${t("serverError")} (${res.status})`);
-      }
-
-      const reader = res.body.getReader();
-      const decoder = new TextDecoder();
-      let buffer = "";
-
-      while (true) {
-        const { done, value } = await reader.read();
-        if (done) break;
-        buffer += decoder.decode(value, { stream: true });
-        const events = buffer.split("\n\n");
-        buffer = events.pop() ?? "";
-        for (const rawEvent of events) {
-          const eventMatch = rawEvent.match(/^event: (.+)$/m);
-          const dataMatch = rawEvent.match(/^data: (.+)$/m);
-          if (!eventMatch || !dataMatch) continue;
-          const eventName = eventMatch[1];
-          let data: { text?: string; message?: string; error?: string } = {};
-          try {
-            data = JSON.parse(dataMatch[1]);
-          } catch {
-            continue;
-          }
-          if (eventName === "text" && data.text) {
-            setOutput((prev) => prev + data.text);
+          group,
+        },
+        requestHeaders,
+        {
+          onText: (text) => {
+            setOutput((prev) => prev + text);
             setStatusMessage("");
-          } else if (eventName === "status" && data.message) {
-            setStatusMessage(data.message);
-          } else if (eventName === "error") {
-            throw new Error(data.error || t("genError"));
-          } else if (eventName === "done") {
-            setStatusMessage("");
-          }
-        }
-      }
+          },
+          onStatus: (message) => setStatusMessage(message),
+        },
+        controller.signal
+      );
       setPhase("done");
     } catch (e) {
       if ((e as Error).name === "AbortError") return;
@@ -351,8 +335,8 @@ export default function Home() {
       abortRef.current = null;
     }
   }, [
-    apiKey, provider, directionId, effectiveProduct, discipline, topic,
-    duration, format, language, extraContext, tools, materialTypes, programFileId, t,
+    requestHeaders, directionId, effectiveProduct, discipline, topic,
+    duration, format, language, extraContext, tools, materialTypes, programFileId, group, t,
   ]);
 
   const exportTitle = `${discipline} — ${topic}`.slice(0, 120);
@@ -858,6 +842,8 @@ export default function Home() {
               </button>
             )}
           </div>
+
+          <GroupPanel lang={uiLang} group={group} onChange={setGroup} />
         </section>
 
         {/* РЕЗУЛЬТАТ */}
@@ -902,9 +888,40 @@ export default function Home() {
                 <p className="max-w-xs">{t("emptyResult")}</p>
               </div>
             )}
-            {output && (
+            {output && phase === "generating" && (
               <div className="prose-output text-sm">
                 <ReactMarkdown remarkPlugins={[remarkGfm]}>{output}</ReactMarkdown>
+              </div>
+            )}
+            {output && phase !== "generating" && (
+              <div className="space-y-4">
+                <CompliancePanel
+                  lang={uiLang}
+                  lessonText={output}
+                  discipline={discipline.trim()}
+                  topic={topic.trim()}
+                  language={language}
+                  product={effectiveProduct || undefined}
+                  programFileId={programFileId || undefined}
+                  requestHeaders={requestHeaders}
+                  hasCurriculum={Boolean(boundProgram || programFileId)}
+                />
+                <LessonEditor
+                  lang={uiLang}
+                  markdown={output}
+                  onChange={setOutput}
+                  requestHeaders={requestHeaders}
+                  meta={{
+                    discipline: discipline.trim(),
+                    topic: topic.trim(),
+                    duration,
+                    format,
+                    language,
+                    product: effectiveProduct || undefined,
+                    tools,
+                    group,
+                  }}
+                />
               </div>
             )}
           </div>
