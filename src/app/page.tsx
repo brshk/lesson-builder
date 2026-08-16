@@ -6,6 +6,8 @@ import remarkGfm from "remark-gfm";
 import { DIRECTIONS } from "@/lib/directions";
 import DirectionCards from "@/components/DirectionCards";
 import ProgramCards from "@/components/ProgramCards";
+import Footer from "@/components/Footer";
+import Logo from "@/components/Logo";
 import { PROGRAM_PORTAL_SLUG } from "@/lib/portalMap";
 import { coursesFor, driveRefFor, driveViewUrl } from "@/lib/programDrive";
 import { UI_LANGS, directionName, tr, type UiKey, type UiLang } from "@/lib/i18n";
@@ -386,17 +388,35 @@ export default function Home() {
     await navigator.clipboard.writeText(output);
   };
 
+  /** Клік по логотипу з будь-якої сторінки повертає на головну. */
+  const goHome = () => {
+    setStep("directions");
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
+
   return (
-    <div className="min-h-screen">
+    <div className="flex min-h-screen flex-col">
       <header className="bg-slate-900 text-white">
         <div className="mx-auto max-w-7xl px-4 py-5 flex items-center gap-3">
-          <div className="h-9 w-9 rounded-lg bg-sky-500 flex items-center justify-center font-bold text-lg">
-            AI
-          </div>
-          <div>
-            <h1 className="text-lg font-semibold leading-tight">{t("appTitle")}</h1>
-            <p className="text-xs text-slate-400">{t("appSubtitle")}</p>
-          </div>
+          <h1 className="m-0">
+            <button
+              type="button"
+              onClick={goHome}
+              title={t("toHome")}
+              aria-label={t("toHome")}
+              className="flex items-center gap-3 rounded-xl text-left transition hover:opacity-85 focus:outline-none focus-visible:ring-2 focus-visible:ring-sky-400"
+            >
+              <Logo size={40} id="lb-head" />
+              <span>
+                <span className="block text-lg font-semibold leading-tight">
+                  {t("appTitle")}
+                </span>
+                <span className="block text-xs font-normal text-slate-400">
+                  {t("appSubtitle")}
+                </span>
+              </span>
+            </button>
+          </h1>
 
           <div
             className="ml-auto flex items-center gap-1 rounded-lg bg-slate-800 p-1"
@@ -424,7 +444,7 @@ export default function Home() {
       </header>
 
       {step === "directions" && (
-        <main className="mx-auto max-w-7xl px-4 py-10">
+        <main className="mx-auto w-full max-w-7xl flex-1 px-4 py-10">
           <DirectionCards
             lang={uiLang}
             directions={DIRECTIONS}
@@ -439,7 +459,7 @@ export default function Home() {
       )}
 
       {step === "programs" && (
-        <main className="mx-auto max-w-7xl px-4 py-10">
+        <main className="mx-auto w-full max-w-7xl flex-1 px-4 py-10">
           <ProgramCards
             lang={uiLang}
             direction={currentDirection}
@@ -454,7 +474,7 @@ export default function Home() {
       )}
 
       {step === "form" && (
-      <main className="mx-auto max-w-7xl px-4 py-6">
+      <main className="mx-auto w-full max-w-7xl flex-1 px-4 py-6">
         <div className="mb-4 flex flex-wrap items-center gap-x-3 gap-y-2 text-sm">
           <button
             type="button"
@@ -892,6 +912,8 @@ export default function Home() {
         </div>
       </main>
       )}
+
+      <Footer lang={uiLang} />
     </div>
   );
 }
