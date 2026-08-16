@@ -347,7 +347,9 @@ async function generateWithGemini(
       contents: [{ role: "user", parts: [{ text: userPrompt }] }],
       ...(withSearch ? { tools: [{ google_search: {} }] } : {}),
       generationConfig: {
-        maxOutputTokens: 32768,
+        // у Gemini 3.x токени «міркувань» списуються з цього ж бюджету,
+        // тому беремо максимум моделі (65536), інакше відповідь обривається
+        maxOutputTokens: 65536,
         temperature: 0.7,
         ...(withThinking ? { thinkingConfig: { thinkingLevel: "high" } } : {}),
       },
@@ -407,6 +409,8 @@ async function generateWithGemini(
   const decoder = new TextDecoder();
   let buffer = "";
   let searchAnnounced = false;
+  let finishReason = "";
+  let gotText = false;
 
   while (true) {
     const { done, value } = await reader.read();
@@ -423,8 +427,12 @@ async function generateWithGemini(
         const candidate = chunk.candidates?.[0];
         const parts = candidate?.content?.parts ?? [];
         for (const part of parts) {
-          if (part.text) send("text", { text: part.text });
+          if (part.text) {
+            gotText = true;
+            send("text", { text: part.text });
+          }
         }
+        if (candidate?.finishReason) finishReason = candidate.finishReason;
         if (!searchAnnounced && candidate?.groundingMetadata) {
           searchAnnounced = true;
           send("status", { message: "🔎 Використано пошук Google…" });
@@ -433,5 +441,17 @@ async function generateWithGemini(
         // неповний JSON-фрагмент — ігноруємо
       }
     }
+  }
+
+  if (finishReason === "MAX_TOKENS") {
+    send("status", {
+      message:
+        "⚠️ Матеріал міг обірватися: вичерпано ліміт довжини відповіді. Спробуйте згенерувати типи матеріалів окремо (наприклад, лише сценарій) або зменшити тривалість заняття.",
+    });
+  }
+  if (!gotText) {
+    throw new Error(
+      "Модель повернула порожню відповідь. Спробуйте ще раз або зменшіть обсяг запиту."
+    );
   }
 }
