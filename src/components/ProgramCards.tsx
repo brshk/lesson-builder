@@ -133,7 +133,8 @@ export default function ProgramCards({
       <span
         className={`inline-block rounded-full px-3 py-1 text-xs font-semibold ${a.chip}`}
       >
-        {direction.code} — {directionName(lang, direction.id, direction.name)}
+        {direction.code ? `${direction.code} — ` : ""}
+        {directionName(lang, direction.id, direction.name)}
       </span>
 
       <h2 className="mt-3 text-2xl font-bold text-slate-900">

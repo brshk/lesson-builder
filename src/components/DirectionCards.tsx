@@ -161,7 +161,8 @@ export default function DirectionCards({
               </span>
 
               <h3 className="text-lg font-bold leading-snug text-slate-900">
-                {d.code} — {directionName(lang, d.id, d.name)}
+                {d.code ? `${d.code} — ` : ""}
+                {directionName(lang, d.id, d.name)}
               </h3>
               {desc && (
                 <p className="mt-2 flex-1 text-sm leading-relaxed text-slate-500">
