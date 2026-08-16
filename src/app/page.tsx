@@ -150,7 +150,6 @@ export default function Home() {
     DIRECTIONS.find((d) => d.id === directionId) ?? DIRECTIONS[0];
   const [product, setProduct] = useState("");
   const boundProgram = driveRefFor(product);
-  const [lessonNumber, setLessonNumber] = useState("");
   const [discipline, setDiscipline] = useState("");
   const [topic, setTopic] = useState("");
   const [durationChoice, setDurationChoice] = useState<string>("90");
@@ -253,7 +252,6 @@ export default function Home() {
         body: JSON.stringify({
           directionId,
           product: product || undefined,
-          lessonNumber: lessonNumber ? Number(lessonNumber) : undefined,
           discipline: discipline.trim(),
           topic: topic.trim(),
           duration,
@@ -314,7 +312,7 @@ export default function Home() {
       abortRef.current = null;
     }
   }, [
-    apiKey, provider, directionId, product, lessonNumber, discipline, topic,
+    apiKey, provider, directionId, product, discipline, topic,
     duration, format, language, extraContext, tools, materialTypes, programFileId,
   ]);
 
@@ -521,21 +519,6 @@ export default function Home() {
                 Змінити напрямок або програму
               </button>
             </div>
-
-            <label className="block">
-              <span className="text-sm font-medium text-slate-700">
-                Номер уроку в курсі
-              </span>
-              <input
-                type="number"
-                min={1}
-                max={500}
-                value={lessonNumber}
-                onChange={(e) => setLessonNumber(e.target.value)}
-                placeholder="Напр.: 7"
-                className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-sky-500 focus:outline-none"
-              />
-            </label>
 
             <label className="block">
               <span className="text-sm font-medium text-slate-700">Дисципліна *</span>
