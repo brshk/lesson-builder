@@ -338,34 +338,38 @@ async function generateWithOpenAI(
   for (const line of buffer.split("\n")) handleLine(line);
 }
 
+
+/**
+ * Генерація через Gemini з двома рівнями стійкості:
+ *  1. перебір «модель × пошук × міркування» — обхід 404 (закрита модель)
+ *     і 429 (пошук недоступний на безкоштовному тарифі);
+ *  2. автопродовження, якщо потік обірвався без finishReason або на MAX_TOKENS.
+ */
 async function generateWithGemini(
   apiKey: string,
   systemPrompt: string,
   userPrompt: string,
   send: SendFn
 ) {
-  const makeBody = (withSearch: boolean, withThinking: boolean) =>
+  type Turn = { role: "user" | "model"; parts: { text: string }[] };
+
+  const makeBody = (
+    contents: Turn[],
+    withSearch: boolean,
+    withThinking: boolean
+  ) =>
     JSON.stringify({
       systemInstruction: { parts: [{ text: systemPrompt }] },
-      contents: [{ role: "user", parts: [{ text: userPrompt }] }],
+      contents,
       ...(withSearch ? { tools: [{ google_search: {} }] } : {}),
       generationConfig: {
-        // у Gemini 3.x токени «міркувань» списуються з цього ж бюджету,
-        // тому беремо максимум моделі (65536), інакше відповідь обривається
+        // у Gemini 3.x токени «міркувань» списуються з цього ж бюджету
         maxOutputTokens: 65536,
         temperature: 0.7,
         ...(withThinking ? { thinkingConfig: { thinkingLevel: "high" } } : {}),
       },
     });
 
-  /**
-   * Порядок спроб (перша успішна виграє):
-   *  1. найкраща модель + веб-пошук + режим міркувань   — платний ключ
-   *  2. найкраща модель + міркування, без пошуку        — безкоштовний тариф
-   *  3. найкраща модель без нічого                      — якщо thinking не підтримується
-   *  4+. запасні моделі                                 — якщо основну закрито (404)
-   * Пошук на безкоштовному тарифі дає 429, старі моделі — 404; обидва обходимо.
-   */
   const [best, ...fallbacks] = GEMINI_MODELS;
   const attempts: { model: string; search: boolean; think: boolean }[] = [
     { model: best, search: true, think: true },
@@ -374,93 +378,144 @@ async function generateWithGemini(
     ...fallbacks.map((m) => ({ model: m, search: false, think: false })),
   ];
 
-  let resp: Response | undefined;
-  let lastErr = "";
-  let searchOff = false;
-
-  for (const a of attempts) {
+  /** Один прохід стріму. Повертає текст і причину завершення. */
+  async function runStream(
+    contents: Turn[],
+    withSearch: boolean,
+    withThinking: boolean,
+    model: string
+  ): Promise<{ ok: boolean; status: number; err?: string; text: string; finish: string }> {
     const r = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/${a.model}:streamGenerateContent?alt=sse`,
+      `https://generativelanguage.googleapis.com/v1beta/models/${model}:streamGenerateContent?alt=sse`,
       {
         method: "POST",
         headers: { "Content-Type": "application/json", "x-goog-api-key": apiKey },
-        body: makeBody(a.search, a.think),
+        body: makeBody(contents, withSearch, withThinking),
       }
     );
-    if (r.ok && r.body) {
-      resp = r;
-      searchOff = !a.search;
+    if (!r.ok || !r.body) {
+      return {
+        ok: false,
+        status: r.status,
+        err: await r.text().catch(() => `${r.status}`),
+        text: "",
+        finish: "",
+      };
+    }
+
+    const reader = r.body.getReader();
+    const decoder = new TextDecoder();
+    let buffer = "";
+    let text = "";
+    let finish = "";
+    let searchAnnounced = false;
+
+    const handleLine = (line: string) => {
+      if (!line.startsWith("data:")) return;
+      const payload = line.slice(5).trim();
+      if (!payload || payload === "[DONE]") return;
+      try {
+        const chunk = JSON.parse(payload);
+        const candidate = chunk.candidates?.[0];
+        for (const part of candidate?.content?.parts ?? []) {
+          if (part.text) {
+            text += part.text;
+            send("text", { text: part.text });
+          }
+        }
+        if (candidate?.finishReason) finish = candidate.finishReason;
+        if (!searchAnnounced && candidate?.groundingMetadata) {
+          searchAnnounced = true;
+          send("status", { message: "🔎 Використано пошук Google…" });
+        }
+      } catch {
+        /* неповний JSON-фрагмент */
+      }
+    };
+
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      buffer += decoder.decode(value, { stream: true });
+      const lines = buffer.split("\n");
+      buffer = lines.pop() ?? "";
+      for (const line of lines) handleLine(line);
+    }
+    // фінальний рядок приходить без \n — саме в ньому finishReason
+    buffer += decoder.decode();
+    for (const line of buffer.split("\n")) handleLine(line);
+
+    return { ok: true, status: 200, text, finish };
+  }
+
+  // ── перший прохід: підбираємо робочу комбінацію ──
+  const baseContents: Turn[] = [{ role: "user", parts: [{ text: userPrompt }] }];
+  let chosen: { model: string; search: boolean; think: boolean } | undefined;
+  let first: Awaited<ReturnType<typeof runStream>> | undefined;
+  let lastErr = "";
+
+  for (const a of attempts) {
+    const res = await runStream(baseContents, a.search, a.think, a.model);
+    if (res.ok) {
+      chosen = a;
+      first = res;
       break;
     }
-    lastErr = await r.text().catch(() => `${r.status}`);
-    // 401/403 — проблема з ключем, перебирати далі немає сенсу
-    if (r.status === 401 || r.status === 403) break;
+    lastErr = res.err || `${res.status}`;
+    if (res.status === 401 || res.status === 403) break;
   }
 
-  if (!resp || !resp.body) {
-    throw new Error(lastErr || "Gemini API error");
-  }
+  if (!chosen || !first) throw new Error(lastErr || "Gemini API error");
 
-  if (searchOff) {
+  if (!chosen.search) {
     send("status", {
       message:
         "ℹ️ Веб-пошук недоступний на безкоштовному тарифі Google — матеріали побудовано на навчальній програмі, описі продукту та знаннях моделі.",
     });
   }
 
-  const reader = resp.body.getReader();
-  const decoder = new TextDecoder();
-  let buffer = "";
-  let searchAnnounced = false;
-  let finishReason = "";
-  let gotText = false;
+  let full = first.text;
+  let finish = first.finish;
 
-  const handleLine = (line: string) => {
-    if (!line.startsWith("data:")) return;
-    const payload = line.slice(5).trim();
-    if (!payload || payload === "[DONE]") return;
-    try {
-      const chunk = JSON.parse(payload);
-      const candidate = chunk.candidates?.[0];
-      const parts = candidate?.content?.parts ?? [];
-      for (const part of parts) {
-        if (part.text) {
-          gotText = true;
-          send("text", { text: part.text });
-        }
-      }
-      if (candidate?.finishReason) finishReason = candidate.finishReason;
-      if (!searchAnnounced && candidate?.groundingMetadata) {
-        searchAnnounced = true;
-        send("status", { message: "🔎 Використано пошук Google…" });
-      }
-    } catch {
-      // неповний JSON-фрагмент — ігноруємо
-    }
-  };
-
-  while (true) {
-    const { done, value } = await reader.read();
-    if (done) break;
-    buffer += decoder.decode(value, { stream: true });
-    const lines = buffer.split("\n");
-    buffer = lines.pop() ?? "";
-    for (const line of lines) handleLine(line);
-  }
-  // ВАЖЛИВО: останній рядок лишається в буфері без \n наприкінці —
-  // саме в ньому приходить фінальний фрагмент тексту й finishReason
-  buffer += decoder.decode();
-  for (const line of buffer.split("\n")) handleLine(line);
-
-  if (finishReason === "MAX_TOKENS") {
-    send("status", {
-      message:
-        "⚠️ Матеріал міг обірватися: вичерпано ліміт довжини відповіді. Спробуйте згенерувати типи матеріалів окремо (наприклад, лише сценарій) або зменшити тривалість заняття.",
-    });
-  }
-  if (!gotText) {
+  if (!full) {
     throw new Error(
       "Модель повернула порожню відповідь. Спробуйте ще раз або зменшіть обсяг запиту."
     );
+  }
+
+  // ── автопродовження: потік обірвався (немає finishReason) або впёрся в ліміт ──
+  const MAX_CONTINUATIONS = 3;
+  for (let i = 0; i < MAX_CONTINUATIONS && finish !== "STOP"; i++) {
+    send("status", {
+      message: `↻ Відповідь обірвалася — дописую продовження (${i + 1}/${MAX_CONTINUATIONS})…`,
+    });
+
+    const contents: Turn[] = [
+      ...baseContents,
+      { role: "model", parts: [{ text: full }] },
+      {
+        role: "user",
+        parts: [
+          {
+            text:
+              "Текст обірвався. Продовж рівно з місця обриву — не повторюй уже написане, " +
+              "не починай спочатку, не додавай вступних фраз. Просто допиши документ до кінця " +
+              "за тією ж структурою і тією ж мовою.",
+          },
+        ],
+      },
+    ];
+
+    const next = await runStream(contents, false, chosen.think, chosen.model);
+    if (!next.ok || !next.text) break;
+    full += next.text;
+    finish = next.finish;
+  }
+
+  if (finish !== "STOP") {
+    send("status", {
+      message:
+        "⚠️ Матеріал може бути неповним — генерацію обірвано за лімітом. Спробуйте згенерувати типи матеріалів окремо або зменшити тривалість заняття.",
+    });
   }
 }
