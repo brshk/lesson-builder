@@ -19,7 +19,7 @@ export const PROGRAM_PORTAL_SLUG: Record<string, string> = {
   "Unicorn online school": "unicorn-online-school",
 
   // МКА
-  "Мала Комп'ютерна Академія": "malaia-kompiuternaia-akademyia-mka",
+  "МКА — Мала Комп'ютерна Академія": "malaia-kompiuternaia-akademyia-mka",
 
   // СК · Програмування
   "Front-end розробка + AI": "front-end-razrabotka-ai",
@@ -44,6 +44,6 @@ export const PROGRAM_PORTAL_SLUG: Record<string, string> = {
   "Бізнес аналітика + AI": "byznes-analytyka-ai",
   "Інтернет-маркетинг + AI": "ynternet-marketynh-ai",
 
-  // Коледж
-  "Фаховий коледж IT STEP": "koledzh-it-step",
+  // ВНЗ
+  "Коледж — Фаховий коледж IT STEP": "koledzh-it-step",
 };

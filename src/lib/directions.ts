@@ -1,21 +1,15 @@
 import type { Direction, ProgramGroup } from "./types";
-import { MKA_COURSES, PSH_COURSES } from "./programDrive";
 
-/** Категорії програм напрямку «МКА — Освіта для дітей». */
-const MKA_GROUPS: ProgramGroup[] = [
-  {
-    title: "МКА — Мала Комп'ютерна Академія",
-    programs: Object.keys(MKA_COURSES),
-  },
-  {
-    title: "ПШ — Перший крок",
-    programs: [
-      ...Object.keys(PSH_COURSES),
-      "Digital Art Kids",
-      "МегаАрт 2D",
-      "3D-мейкер",
-    ],
-  },
+/**
+ * Програми напрямку «Освіта для дітей» — чотири укрупнені картки.
+ * Конкретний курс усередині МКА/ПШ/спецкурсів викладач обирає вже
+ * в генераторі (поле «Курс»), див. COURSE_SETS у programDrive.ts.
+ */
+const KIDS_PROGRAMS = [
+  "МКА — Мала Комп'ютерна Академія",
+  "ПШ — Перший крок",
+  "Дитячі спецкурси",
+  "IT табір",
 ];
 
 /** Категорії програм напрямку «СК — Спеціальні курси». */
@@ -97,8 +91,6 @@ export const DIRECTIONS: Direction[] = [
     disciplines: [
       "ШС Full-Stack Designer + AI",
       "GameDev Unity для підлітків",
-      "Розробка ігор у Roblox Studio",
-      "Анімація та мультиплікація",
     ],
   },
   {
@@ -113,14 +105,13 @@ export const DIRECTIONS: Direction[] = [
   },
   {
     id: "mka",
-    code: "МКА",
+    code: "",
     name: "Освіта для дітей",
     description:
-      "Мала Комп'ютерна Академія та Перший крок: IT для учнів 1–8 класів, 7–14 років.",
+      "Мала Комп'ютерна Академія, Перший крок, дитячі спецкурси та IT табір: IT для учнів 1–8 класів, 7–14 років.",
     accent: "emerald",
     icon: "rocket",
-    groups: MKA_GROUPS,
-    disciplines: MKA_GROUPS.flatMap((g) => g.programs),
+    disciplines: KIDS_PROGRAMS,
   },
   {
     id: "sk",
@@ -134,23 +125,16 @@ export const DIRECTIONS: Direction[] = [
     disciplines: SK_GROUPS.flatMap((g) => g.programs),
   },
   {
-    id: "college",
-    code: "Коледж",
-    name: "Фаховий коледж IT STEP",
-    description:
-      "Фахова передвища освіта після 9/11 класу — 4 роки навчання з дипломом державного зразка.",
-    accent: "amber",
-    icon: "building",
-    disciplines: ["Фаховий коледж IT STEP"],
-  },
-  {
     id: "university",
     code: "ВНЗ",
     name: "Вища освіта",
     description:
-      "Програми вищої освіти — бакалаврат і магістратура за IT-спеціальностями.",
+      "Фаховий коледж і програми вищої освіти — бакалаврат та магістратура за IT-спеціальностями.",
     accent: "rose",
     icon: "diploma",
-    disciplines: [],
+    disciplines: [
+      "Коледж — Фаховий коледж IT STEP",
+      "ВНЗ — Вища освіта",
+    ],
   },
 ];

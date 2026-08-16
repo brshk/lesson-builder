@@ -152,6 +152,30 @@ PROGRAM_DRIVE["3D-мейкер"] = {
   folder: PSH_FOLDER,
 };
 
+/**
+ * Курси всередині укрупнених карток напрямку «Освіта для дітей».
+ * Картка-продукт веде одразу в генератор, а конкретний курс (і разом із ним
+ * навчальну програму з Drive) викладач обирає полем «Курс» у формі.
+ */
+export const COURSE_SETS: Record<string, string[]> = {
+  "МКА — Мала Комп'ютерна Академія": Object.keys(MKA_COURSES),
+  "ПШ — Перший крок": [
+    ...Object.keys(PSH_COURSES),
+    "Digital Art Kids",
+    "МегаАрт 2D",
+    "3D-мейкер",
+  ],
+  "Дитячі спецкурси": [
+    "Розробка ігор у Roblox Studio",
+    "Анімація та мультиплікація",
+  ],
+};
+
+/** Список курсів для продукту (порожній, якщо продукт не має підкурсів). */
+export function coursesFor(product: string): string[] {
+  return COURSE_SETS[product] ?? [];
+}
+
 export function driveRefFor(programName?: string): DriveProgramRef | undefined {
   if (!programName) return undefined;
   return PROGRAM_DRIVE[programName];

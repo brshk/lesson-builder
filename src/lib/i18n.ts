@@ -103,6 +103,11 @@ const uk = {
 
   interfaceLanguage: "Мова інтерфейсу",
 
+  course: "Курс",
+  courseAny: "— усі курси напрямку —",
+  courseHint:
+    "Оберіть конкретний курс, щоб генерація враховувала його навчальну програму (📘 — програма прив'язана).",
+
   providerFree: "Без ключа",
   badgeFree: "безкоштовно",
   badgePaid: "платний ключ",
@@ -211,6 +216,11 @@ const ru: Dict = {
 
   interfaceLanguage: "Язык интерфейса",
 
+  course: "Курс",
+  courseAny: "— все курсы направления —",
+  courseHint:
+    "Выберите конкретный курс, чтобы генерация учитывала его учебную программу (📘 — программа привязана).",
+
   providerFree: "Без ключа",
   badgeFree: "бесплатно",
   badgePaid: "платный ключ",
@@ -317,6 +327,11 @@ const en: Dict = {
 
   interfaceLanguage: "Interface language",
 
+  course: "Course",
+  courseAny: "— all courses in this track —",
+  courseHint:
+    "Pick a specific course so generation follows its curriculum (📘 — curriculum linked).",
+
   providerFree: "No key",
   badgeFree: "free",
   badgePaid: "paid key",
@@ -398,12 +413,12 @@ const DIRECTION_I18N: Record<string, Partial<Record<UiLang, { name: string; desc
     ru: {
       name: "Образование для детей",
       description:
-        "Малая Компьютерная Академия и Первый шаг: IT для учеников 1–8 классов, 7–14 лет.",
+        "Малая Компьютерная Академия, Первый шаг, детские спецкурсы и IT лагерь: IT для учеников 1–8 классов, 7–14 лет.",
     },
     en: {
       name: "Education for children",
       description:
-        "Junior Computer Academy and First Step: IT for grades 1–8, ages 7–14.",
+        "Junior Computer Academy, First Step, kids' special courses and IT camp: IT for grades 1–8, ages 7–14.",
     },
   },
   sk: {
@@ -418,27 +433,16 @@ const DIRECTION_I18N: Record<string, Partial<Record<UiLang, { name: string; desc
         "Intensive specialised courses for upskilling and mastering AI tools quickly.",
     },
   },
-  college: {
-    ru: {
-      name: "Профессиональный колледж IT STEP",
-      description:
-        "Профессиональное предвысшее образование после 9/11 класса — 4 года обучения с дипломом государственного образца.",
-    },
-    en: {
-      name: "IT STEP vocational college",
-      description:
-        "Pre-higher vocational education after grade 9/11 — 4 years with a state-recognised diploma.",
-    },
-  },
   university: {
     ru: {
       name: "Высшее образование",
       description:
-        "Программы высшего образования — бакалавриат и магистратура по IT-специальностям.",
+        "Профессиональный колледж и программы высшего образования — бакалавриат и магистратура по IT-специальностям.",
     },
     en: {
       name: "Higher education",
-      description: "Bachelor's and master's programs in IT specialities.",
+      description:
+        "Vocational college plus bachelor's and master's programs in IT specialities.",
     },
   },
 };
