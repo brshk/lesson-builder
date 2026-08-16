@@ -12,7 +12,18 @@ export const runtime = "nodejs";
 export const maxDuration = 300;
 
 const CLAUDE_MODEL = process.env.ANTHROPIC_MODEL || "claude-sonnet-4-5";
-const GEMINI_MODEL = process.env.GEMINI_MODEL || "gemini-2.5-flash";
+/**
+ * Моделі Gemini пробуються по черзі: Google періодично закриває старі
+ * для нових ключів, тому список кандидатів рятує від «404 no longer available».
+ */
+const GEMINI_MODELS = process.env.GEMINI_MODEL
+  ? [process.env.GEMINI_MODEL]
+  : [
+      "gemini-flash-latest",
+      "gemini-2.5-flash",
+      "gemini-2.0-flash",
+      "gemini-flash-lite-latest",
+    ];
 const OPENAI_MODEL = process.env.OPENAI_MODEL || "gpt-5.5";
 
 type Provider = "claude" | "gemini" | "openai" | "free";
@@ -330,26 +341,36 @@ async function generateWithGemini(
   userPrompt: string,
   send: SendFn
 ) {
-  const resp = await fetch(
-    `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:streamGenerateContent?alt=sse`,
-    {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "x-goog-api-key": apiKey,
-      },
-      body: JSON.stringify({
-        systemInstruction: { parts: [{ text: systemPrompt }] },
-        contents: [{ role: "user", parts: [{ text: userPrompt }] }],
-        tools: [{ google_search: {} }],
-        generationConfig: { maxOutputTokens: 32768 },
-      }),
-    }
-  );
+  const body = JSON.stringify({
+    systemInstruction: { parts: [{ text: systemPrompt }] },
+    contents: [{ role: "user", parts: [{ text: userPrompt }] }],
+    tools: [{ google_search: {} }],
+    generationConfig: { maxOutputTokens: 32768 },
+  });
 
-  if (!resp.ok || !resp.body) {
-    const errText = await resp.text().catch(() => "");
-    throw new Error(errText || `Gemini API error ${resp.status}`);
+  // Пробуємо моделі по черзі: недоступну Google віддає як 404/400
+  let resp: Response | undefined;
+  let lastErr = "";
+  for (const model of GEMINI_MODELS) {
+    const r = await fetch(
+      `https://generativelanguage.googleapis.com/v1beta/models/${model}:streamGenerateContent?alt=sse`,
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "x-goog-api-key": apiKey },
+        body,
+      }
+    );
+    if (r.ok && r.body) {
+      resp = r;
+      break;
+    }
+    lastErr = await r.text().catch(() => `${r.status}`);
+    // якщо проблема не в моделі (ключ, квота) — далі перебирати немає сенсу
+    if (r.status !== 404 && r.status !== 400) break;
+  }
+
+  if (!resp || !resp.body) {
+    throw new Error(lastErr || "Gemini API error");
   }
 
   const reader = resp.body.getReader();
