@@ -8,14 +8,15 @@ import DirectionCards from "@/components/DirectionCards";
 import ProgramCards from "@/components/ProgramCards";
 import { PROGRAM_PORTAL_SLUG } from "@/lib/portalMap";
 import { driveRefFor, driveViewUrl } from "@/lib/programDrive";
+import { UI_LANGS, directionName, tr, type UiKey, type UiLang } from "@/lib/i18n";
 import type { DriveProgram, Language, LessonFormat, MaterialType } from "@/lib/types";
 
 const DURATIONS = [45, 60, 90, 120, 180] as const;
 
-const FORMATS: { value: LessonFormat; label: string }[] = [
-  { value: "offline", label: "Офлайн" },
-  { value: "online", label: "Онлайн" },
-  { value: "mixed", label: "Змішаний" },
+const FORMATS: { value: LessonFormat; key: UiKey }[] = [
+  { value: "offline", key: "formatOffline" },
+  { value: "online", key: "formatOnline" },
+  { value: "mixed", key: "formatMixed" },
 ];
 
 const LANGUAGES: { value: Language; label: string }[] = [
@@ -28,68 +29,72 @@ type ProviderId = "free" | "gemini" | "openai" | "claude";
 
 const PROVIDERS: {
   id: ProviderId;
-  label: string;
-  badge: string;
+  label?: string;
+  labelKey?: UiKey;
+  badgeKey: UiKey;
   placeholder: string;
   storageKey: string;
   keyUrl: string;
   keyUrlLabel: string;
-  note: string;
+  noteKey?: UiKey;
   keyless?: boolean;
 }[] = [
   {
     id: "free",
-    label: "Без ключа",
-    badge: "безкоштовно",
+    labelKey: "providerFree",
+    badgeKey: "badgeFree",
     placeholder: "",
     storageKey: "",
     keyUrl: "",
     keyUrlLabel: "",
-    note: "",
     keyless: true,
   },
   {
     id: "gemini",
     label: "Gemini",
-    badge: "безкоштовно",
+    badgeKey: "badgeFree",
     placeholder: "AIza…",
     storageKey: "gemini_api_key",
     keyUrl: "https://aistudio.google.com/apikey",
     keyUrlLabel: "aistudio.google.com/apikey",
-    note: "Безкоштовний ключ без банківської картки: увійдіть Google-акаунтом → Create API key. Діє безкоштовний денний ліміт запитів.",
+    noteKey: "noteGemini",
   },
   {
     id: "openai",
     label: "ChatGPT",
-    badge: "платний ключ",
+    badgeKey: "badgePaid",
     placeholder: "sk-proj-…",
     storageKey: "openai_api_key",
     keyUrl: "https://platform.openai.com/api-keys",
     keyUrlLabel: "platform.openai.com/api-keys",
-    note: "Потрібен акаунт OpenAI Platform із поповненим балансом (Billing, від $5). Підписка ChatGPT Plus для API не діє — це окремий баланс.",
+    noteKey: "noteOpenai",
   },
   {
     id: "claude",
     label: "Claude",
-    badge: "платний ключ",
+    badgeKey: "badgePaid",
     placeholder: "sk-ant-…",
     storageKey: "anthropic_api_key",
     keyUrl: "https://console.anthropic.com/settings/keys",
     keyUrlLabel: "console.anthropic.com",
-    note: "Потрібен баланс на акаунті Anthropic (Plans & Billing, від $5). Одна генерація ≈ $0.10–0.30.",
+    noteKey: "noteClaude",
   },
 ];
 
-const MATERIALS: { value: MaterialType; label: string; hint: string }[] = [
-  { value: "scenario", label: "Детальний сценарій заняття", hint: "поетапний план з таймінгом і конспектом" },
-  { value: "slides", label: "Опис слайдів презентації", hint: "вміст, візуал і нотатки для кожного слайда" },
-  { value: "practice", label: "Практичне завдання", hint: "покрокова робота в аудиторії" },
-  { value: "homework", label: "Домашнє завдання", hint: "3 рівні: простий, середній, складний" },
+const MATERIALS: { value: MaterialType; labelKey: UiKey; hintKey: UiKey }[] = [
+  { value: "scenario", labelKey: "matScenario", hintKey: "matScenarioHint" },
+  { value: "slides", labelKey: "matSlides", hintKey: "matSlidesHint" },
+  { value: "practice", labelKey: "matPractice", hintKey: "matPracticeHint" },
+  { value: "homework", labelKey: "matHomework", hintKey: "matHomeworkHint" },
 ];
 
 type Phase = "idle" | "generating" | "done" | "error";
 
 export default function Home() {
+  // мова інтерфейсу (зберігається у браузері)
+  const [uiLang, setUiLang] = useState<UiLang>("uk");
+  const t = useCallback((k: UiKey) => tr(uiLang, k), [uiLang]);
+
   // AI-провайдер і API-ключ користувача (BYOK) — зберігаються лише в браузері
   const [provider, setProvider] = useState<ProviderId>("free");
   const [keys, setKeys] = useState<Record<ProviderId, string>>({
@@ -159,6 +164,33 @@ export default function Home() {
   const [extraContext, setExtraContext] = useState("");
   const [tools, setTools] = useState("");
   const [materialTypes, setMaterialTypes] = useState<MaterialType[]>(["scenario"]);
+
+  // відновлюємо мову інтерфейсу та синхронізуємо мову генерації
+  useEffect(() => {
+    try {
+      const saved = window.localStorage.getItem("ui_lang");
+      if (UI_LANGS.some((l) => l.id === saved)) {
+        setUiLang(saved as UiLang);
+        setLanguage(saved as Language);
+      }
+    } catch {
+      /* localStorage недоступний */
+    }
+  }, []);
+
+  useEffect(() => {
+    document.documentElement.lang = uiLang;
+  }, [uiLang]);
+
+  const changeUiLang = (l: UiLang) => {
+    setUiLang(l);
+    setLanguage(l as Language);
+    try {
+      window.localStorage.setItem("ui_lang", l);
+    } catch {
+      /* ignore */
+    }
+  };
 
   // програми з Google Drive
   const [programs, setPrograms] = useState<DriveProgram[]>([]);
@@ -235,7 +267,7 @@ export default function Home() {
     setPhase("generating");
     setOutput("");
     setErrorMessage("");
-    setStatusMessage("Готую запит…");
+    setStatusMessage(t("preparing"));
 
     const controller = new AbortController();
     abortRef.current = controller;
@@ -266,7 +298,7 @@ export default function Home() {
 
       if (!res.ok || !res.body) {
         const data = await res.json().catch(() => null);
-        throw new Error(data?.error || `Помилка сервера (${res.status})`);
+        throw new Error(data?.error || `${t("serverError")} (${res.status})`);
       }
 
       const reader = res.body.getReader();
@@ -296,7 +328,7 @@ export default function Home() {
           } else if (eventName === "status" && data.message) {
             setStatusMessage(data.message);
           } else if (eventName === "error") {
-            throw new Error(data.error || "Помилка генерації");
+            throw new Error(data.error || t("genError"));
           } else if (eventName === "done") {
             setStatusMessage("");
           }
@@ -313,7 +345,7 @@ export default function Home() {
     }
   }, [
     apiKey, provider, directionId, product, discipline, topic,
-    duration, format, language, extraContext, tools, materialTypes, programFileId,
+    duration, format, language, extraContext, tools, materialTypes, programFileId, t,
   ]);
 
   const exportTitle = `${discipline} — ${topic}`.slice(0, 120);
@@ -334,7 +366,7 @@ export default function Home() {
       body: JSON.stringify({ markdown: output, title: exportTitle }),
     });
     if (!res.ok) {
-      alert("Не вдалося створити DOCX");
+      alert(t("docxFailed"));
       return;
     }
     const blob = await res.blob();
@@ -357,10 +389,31 @@ export default function Home() {
             AI
           </div>
           <div>
-            <h1 className="text-lg font-semibold leading-tight">AI Lesson Builder</h1>
-            <p className="text-xs text-slate-400">
-              Генератор навчальних матеріалів · IT STEP
-            </p>
+            <h1 className="text-lg font-semibold leading-tight">{t("appTitle")}</h1>
+            <p className="text-xs text-slate-400">{t("appSubtitle")}</p>
+          </div>
+
+          <div
+            className="ml-auto flex items-center gap-1 rounded-lg bg-slate-800 p-1"
+            role="group"
+            aria-label={t("interfaceLanguage")}
+          >
+            {UI_LANGS.map((l) => (
+              <button
+                key={l.id}
+                type="button"
+                onClick={() => changeUiLang(l.id)}
+                title={l.label}
+                aria-pressed={uiLang === l.id}
+                className={`rounded-md px-2.5 py-1 text-xs font-semibold transition ${
+                  uiLang === l.id
+                    ? "bg-sky-500 text-white"
+                    : "text-slate-300 hover:bg-slate-700 hover:text-white"
+                }`}
+              >
+                {l.short}
+              </button>
+            ))}
           </div>
         </div>
       </header>
@@ -368,6 +421,7 @@ export default function Home() {
       {step === "directions" && (
         <main className="mx-auto max-w-7xl px-4 py-10">
           <DirectionCards
+            lang={uiLang}
             directions={DIRECTIONS}
             onSelect={(id) => {
               setDirectionId(id);
@@ -381,6 +435,7 @@ export default function Home() {
       {step === "programs" && (
         <main className="mx-auto max-w-7xl px-4 py-10">
           <ProgramCards
+            lang={uiLang}
             direction={currentDirection}
             onBack={() => setStep("directions")}
             onSelect={(p) => {
@@ -399,7 +454,7 @@ export default function Home() {
             onClick={() => setStep("directions")}
             className="text-slate-500 hover:text-slate-800"
           >
-            Напрямки
+            {t("breadcrumbDirections")}
           </button>
           <span className="text-slate-300">/</span>
           <button
@@ -411,21 +466,21 @@ export default function Home() {
           </button>
           <span className="text-slate-300">/</span>
           <span className="font-semibold text-slate-800">
-            {product || "Без прив'язки до програми"}
+            {product || t("noProgramBound")}
           </span>
           <button
             type="button"
             onClick={() => setStep("programs")}
             className="ml-1 rounded-md border border-slate-300 px-2 py-0.5 text-xs text-slate-500 hover:bg-slate-100"
           >
-            Змінити
+            {t("change")}
           </button>
         </div>
         <div className="grid gap-6 lg:grid-cols-[420px_1fr]">
         {/* ФОРМА */}
         <section className="space-y-5">
           <div className="rounded-xl bg-white p-5 shadow-sm border border-slate-200 space-y-3">
-            <h2 className="font-semibold text-slate-800">AI-модель та ключ</h2>
+            <h2 className="font-semibold text-slate-800">{t("aiModelAndKey")}</h2>
             <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
               {PROVIDERS.map((p) => (
                 <button
@@ -438,23 +493,20 @@ export default function Home() {
                       : "bg-white text-slate-700 border-slate-300 hover:border-sky-400"
                   }`}
                 >
-                  {p.label}
+                  {p.labelKey ? t(p.labelKey) : p.label}
                   <span
                     className={`block text-[11px] ${
                       provider === p.id ? "text-sky-100" : "text-slate-400"
                     }`}
                   >
-                    {p.badge}
+                    {t(p.badgeKey)}
                   </span>
                 </button>
               ))}
             </div>
             {providerInfo.keyless ? (
               <p className="rounded-lg bg-emerald-50 px-3 py-2 text-xs text-emerald-800">
-                🎁 Нічого налаштовувати не потрібно — генерація працює одразу за
-                рахунок академії. Діє обмеження: кілька занять на добу з одного
-                пристрою. Якщо ліміт вичерпано або потрібна вища якість — оберіть
-                вкладку з власним ключем.
+                🎁 {t("freeNote")}
               </p>
             ) : (
               <>
@@ -472,11 +524,11 @@ export default function Home() {
                     onClick={() => setShowApiKey((s) => !s)}
                     className="rounded-lg border border-slate-300 px-3 py-2 text-xs text-slate-600 hover:bg-slate-100"
                   >
-                    {showApiKey ? "Сховати" : "Показати"}
+                    {showApiKey ? t("hide") : t("show")}
                   </button>
                 </div>
                 <p className="text-xs text-slate-500">
-                  Ключ:{" "}
+                  {t("keyLabel")}:{" "}
                   <a
                     href={providerInfo.keyUrl}
                     target="_blank"
@@ -485,30 +537,33 @@ export default function Home() {
                   >
                     {providerInfo.keyUrlLabel}
                   </a>
-                  . {providerInfo.note} Ключ зберігається лише у вашому браузері.
+                  . {providerInfo.noteKey ? t(providerInfo.noteKey) : ""}{" "}
+                  {t("keyStored")}
                 </p>
               </>
             )}
           </div>
 
           <div className="rounded-xl bg-white p-5 shadow-sm border border-slate-200 space-y-4">
-            <h2 className="font-semibold text-slate-800">Параметри заняття</h2>
+            <h2 className="font-semibold text-slate-800">{t("lessonParams")}</h2>
 
             <div className="rounded-lg bg-slate-50 px-3 py-2.5 text-sm">
               <p className="text-slate-500">
-                Напрямок:{" "}
+                {t("direction")}:{" "}
                 <span className="font-medium text-slate-800">
-                  {currentDirection.code} — {currentDirection.name}
+                  {currentDirection.code} —{" "}
+                  {directionName(uiLang, currentDirection.id, currentDirection.name)}
                 </span>
               </p>
               {product && (
                 <p className="mt-0.5 text-slate-500">
-                  Програма: <span className="font-medium text-slate-800">{product}</span>
+                  {t("program")}:{" "}
+                  <span className="font-medium text-slate-800">{product}</span>
                 </p>
               )}
               {product && PROGRAM_PORTAL_SLUG[product] && (
                 <p className="mt-1 text-xs text-emerald-700">
-                  📄 Опис продукту з ПКО-порталу враховується при генерації
+                  📄 {t("portalDocUsed")}
                 </p>
               )}
               <button
@@ -516,26 +571,30 @@ export default function Home() {
                 onClick={() => setStep("programs")}
                 className="mt-1.5 text-xs text-sky-600 underline hover:text-sky-700"
               >
-                Змінити напрямок або програму
+                {t("changeDirectionOrProgram")}
               </button>
             </div>
 
             <label className="block">
-              <span className="text-sm font-medium text-slate-700">Дисципліна *</span>
+              <span className="text-sm font-medium text-slate-700">
+                {t("discipline")} *
+              </span>
               <input
                 value={discipline}
                 onChange={(e) => setDiscipline(e.target.value)}
-                placeholder="Напр.: Основи Python"
+                placeholder={t("disciplinePlaceholder")}
                 className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-sky-500 focus:outline-none"
               />
             </label>
 
             <label className="block">
-              <span className="text-sm font-medium text-slate-700">Тема заняття *</span>
+              <span className="text-sm font-medium text-slate-700">
+                {t("topic")} *
+              </span>
               <input
                 value={topic}
                 onChange={(e) => setTopic(e.target.value)}
-                placeholder="Напр.: Робота зі списками та кортежами"
+                placeholder={t("topicPlaceholder")}
                 className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-sky-500 focus:outline-none"
               />
             </label>
@@ -543,11 +602,11 @@ export default function Home() {
             {/* Програма навчання з Google Drive */}
             <div>
               <span className="text-sm font-medium text-slate-700">
-                Програма навчання (Google Drive)
+                {t("curriculumDrive")}
               </span>
               {boundProgram ? (
                 <div className="mt-1 rounded-lg bg-emerald-50 px-3 py-2 text-xs text-emerald-800">
-                  📘 Прив'язано:{" "}
+                  📘 {t("bound")}:{" "}
                   <a
                     href={driveViewUrl(boundProgram)}
                     target="_blank"
@@ -557,13 +616,12 @@ export default function Home() {
                     {boundProgram.fileName}
                   </a>
                   <span className="mt-0.5 block text-emerald-700">
-                    Матеріали будуть згенеровані відповідно до цієї програми.
+                    {t("boundNote")}
                   </span>
                 </div>
               ) : (
                 <p className="mt-1 rounded-lg bg-slate-50 px-3 py-2 text-xs text-slate-500">
-                  Для цієї програми файл навчальної програми ще не прив'язано —
-                  генерація працюватиме без нього.
+                  {t("notBoundNote")}
                 </p>
               )}
               {!boundProgram && driveConfigured && (
@@ -571,7 +629,7 @@ export default function Home() {
                   <input
                     value={programFilter}
                     onChange={(e) => setProgramFilter(e.target.value)}
-                    placeholder="Пошук програми за назвою…"
+                    placeholder={t("searchProgram")}
                     className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-sky-500 focus:outline-none"
                   />
                   <select
@@ -579,7 +637,7 @@ export default function Home() {
                     onChange={(e) => setProgramFileId(e.target.value)}
                     className="mt-2 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-sky-500 focus:outline-none"
                   >
-                    <option value="">— без програми —</option>
+                    <option value="">{t("withoutProgram")}</option>
                     {filteredPrograms.map((p) => (
                       <option key={p.id} value={p.id}>
                         {p.name}
@@ -589,13 +647,13 @@ export default function Home() {
                 </>
               )}
               {!boundProgram && driveConfigured === null && (
-                <p className="mt-1 text-xs text-slate-400">Завантажую список програм…</p>
+                <p className="mt-1 text-xs text-slate-400">{t("loadingPrograms")}</p>
               )}
             </div>
 
             {/* Тривалість */}
             <div>
-              <span className="text-sm font-medium text-slate-700">Тривалість заняття</span>
+              <span className="text-sm font-medium text-slate-700">{t("duration")}</span>
               <div className="mt-1 flex flex-wrap gap-2">
                 {DURATIONS.map((d) => (
                   <button
@@ -608,7 +666,7 @@ export default function Home() {
                         : "bg-white text-slate-700 border-slate-300 hover:border-sky-400"
                     }`}
                   >
-                    {d} хв
+                    {d} {t("minutes")}
                   </button>
                 ))}
                 <button
@@ -620,7 +678,7 @@ export default function Home() {
                       : "bg-white text-slate-700 border-slate-300 hover:border-sky-400"
                   }`}
                 >
-                  Власне значення
+                  {t("customDuration")}
                 </button>
               </div>
               {durationChoice === "custom" && (
@@ -630,7 +688,7 @@ export default function Home() {
                   max={480}
                   value={customDuration}
                   onChange={(e) => setCustomDuration(e.target.value)}
-                  placeholder="Тривалість у хвилинах"
+                  placeholder={t("customDurationPlaceholder")}
                   className="mt-2 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-sky-500 focus:outline-none"
                 />
               )}
@@ -638,7 +696,7 @@ export default function Home() {
 
             {/* Формат */}
             <div>
-              <span className="text-sm font-medium text-slate-700">Формат заняття</span>
+              <span className="text-sm font-medium text-slate-700">{t("format")}</span>
               <div className="mt-1 flex gap-2">
                 {FORMATS.map((f) => (
                   <button
@@ -651,7 +709,7 @@ export default function Home() {
                         : "bg-white text-slate-700 border-slate-300 hover:border-sky-400"
                     }`}
                   >
-                    {f.label}
+                    {t(f.key)}
                   </button>
                 ))}
               </div>
@@ -660,7 +718,7 @@ export default function Home() {
             {/* Мова */}
             <div>
               <span className="text-sm font-medium text-slate-700">
-                Мова генерування матеріалів
+                {t("materialsLanguage")}
               </span>
               <div className="mt-1 flex gap-2">
                 {LANGUAGES.map((l) => (
@@ -682,30 +740,30 @@ export default function Home() {
 
             <label className="block">
               <span className="text-sm font-medium text-slate-700">
-                Додатковий контекст та побажання
+                {t("extraContext")}
               </span>
               <textarea
                 value={extraContext}
                 onChange={(e) => setExtraContext(e.target.value)}
                 rows={3}
-                placeholder="Особливості групи, рівень студентів, акценти…"
+                placeholder={t("extraContextPlaceholder")}
                 className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-sky-500 focus:outline-none"
               />
             </label>
 
             <label className="block">
-              <span className="text-sm font-medium text-slate-700">Необхідні інструменти</span>
+              <span className="text-sm font-medium text-slate-700">{t("tools")}</span>
               <input
                 value={tools}
                 onChange={(e) => setTools(e.target.value)}
-                placeholder="Напр.: VS Code, Python 3.12, Figma…"
+                placeholder={t("toolsPlaceholder")}
                 className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-sky-500 focus:outline-none"
               />
             </label>
 
             {/* Тип матеріалів */}
             <div>
-              <span className="text-sm font-medium text-slate-700">Тип заняття / матеріалів</span>
+              <span className="text-sm font-medium text-slate-700">{t("materialTypes")}</span>
               <div className="mt-1 space-y-2">
                 {MATERIALS.map((m) => (
                   <label
@@ -723,8 +781,8 @@ export default function Home() {
                       className="mt-0.5 accent-sky-500"
                     />
                     <span className="text-sm">
-                      <span className="font-medium text-slate-800">{m.label}</span>
-                      <span className="block text-xs text-slate-500">{m.hint}</span>
+                      <span className="font-medium text-slate-800">{t(m.labelKey)}</span>
+                      <span className="block text-xs text-slate-500">{t(m.hintKey)}</span>
                     </span>
                   </label>
                 ))}
@@ -737,7 +795,7 @@ export default function Home() {
               onClick={generate}
               className="w-full rounded-lg bg-sky-500 py-2.5 text-sm font-semibold text-white transition hover:bg-sky-600 disabled:opacity-40 disabled:cursor-not-allowed"
             >
-              {phase === "generating" ? "Генерую…" : "Згенерувати матеріали"}
+              {phase === "generating" ? t("generating") : t("generate")}
             </button>
             {phase === "generating" && (
               <button
@@ -745,7 +803,7 @@ export default function Home() {
                 onClick={stopGeneration}
                 className="w-full rounded-lg border border-slate-300 py-2 text-sm text-slate-600 hover:bg-slate-100"
               >
-                Зупинити
+                {t("stop")}
               </button>
             )}
           </div>
@@ -754,14 +812,14 @@ export default function Home() {
         {/* РЕЗУЛЬТАТ */}
         <section className="rounded-xl bg-white shadow-sm border border-slate-200 flex flex-col min-h-[70vh]">
           <div className="flex items-center justify-between border-b border-slate-200 px-5 py-3">
-            <h2 className="font-semibold text-slate-800">Результат</h2>
+            <h2 className="font-semibold text-slate-800">{t("result")}</h2>
             {output && (
               <div className="flex gap-2">
                 <button
                   onClick={copyOutput}
                   className="rounded-lg border border-slate-300 px-3 py-1.5 text-xs text-slate-600 hover:bg-slate-100"
                 >
-                  Копіювати
+                  {t("copy")}
                 </button>
                 <button
                   onClick={downloadMarkdown}
@@ -773,7 +831,7 @@ export default function Home() {
                   onClick={downloadDocx}
                   className="rounded-lg bg-slate-800 px-3 py-1.5 text-xs text-white hover:bg-slate-700"
                 >
-                  Завантажити .docx
+                  {t("downloadDocx")}
                 </button>
               </div>
             )}
@@ -790,11 +848,7 @@ export default function Home() {
             )}
             {!output && phase === "idle" && (
               <div className="flex h-full items-center justify-center text-center text-sm text-slate-400">
-                <p>
-                  Заповніть параметри заняття зліва та натисніть
-                  <br />
-                  «Згенерувати матеріали»
-                </p>
+                <p className="max-w-xs">{t("emptyResult")}</p>
               </div>
             )}
             {output && (

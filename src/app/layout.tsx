@@ -4,7 +4,7 @@ import "./globals.css";
 export const metadata: Metadata = {
   title: "AI Lesson Builder — генератор навчальних матеріалів",
   description:
-    "Генерація навчальних матеріалів для викладачів IT STEP: сценарії занять, слайди, практичні та домашні завдання",
+    "Генерація навчальних матеріалів для викладачів IT STEP: сценарії занять, слайди, практичні та домашні завдання. Інтерфейс: українська / русский / English.",
 };
 
 export default function RootLayout({
