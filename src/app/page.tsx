@@ -7,7 +7,7 @@ import { DIRECTIONS } from "@/lib/directions";
 import DirectionCards from "@/components/DirectionCards";
 import ProgramCards from "@/components/ProgramCards";
 import { PROGRAM_PORTAL_SLUG } from "@/lib/portalMap";
-import { driveRefFor, driveViewUrl } from "@/lib/programDrive";
+import { coursesFor, driveRefFor, driveViewUrl } from "@/lib/programDrive";
 import { UI_LANGS, directionName, tr, type UiKey, type UiLang } from "@/lib/i18n";
 import type { DriveProgram, Language, LessonFormat, MaterialType } from "@/lib/types";
 
@@ -154,7 +154,12 @@ export default function Home() {
   const currentDirection =
     DIRECTIONS.find((d) => d.id === directionId) ?? DIRECTIONS[0];
   const [product, setProduct] = useState("");
-  const boundProgram = driveRefFor(product);
+  // курс усередині укрупненої картки (МКА / ПШ / Дитячі спецкурси)
+  const [course, setCourse] = useState("");
+  const courseOptions = coursesFor(product);
+  /** Що саме йде в генерацію: конкретний курс, якщо обраний, інакше продукт. */
+  const effectiveProduct = course || product;
+  const boundProgram = driveRefFor(effectiveProduct);
   const [discipline, setDiscipline] = useState("");
   const [topic, setTopic] = useState("");
   const [durationChoice, setDurationChoice] = useState<string>("90");
@@ -283,7 +288,7 @@ export default function Home() {
         signal: controller.signal,
         body: JSON.stringify({
           directionId,
-          product: product || undefined,
+          product: effectiveProduct || undefined,
           discipline: discipline.trim(),
           topic: topic.trim(),
           duration,
@@ -344,7 +349,7 @@ export default function Home() {
       abortRef.current = null;
     }
   }, [
-    apiKey, provider, directionId, product, discipline, topic,
+    apiKey, provider, directionId, effectiveProduct, discipline, topic,
     duration, format, language, extraContext, tools, materialTypes, programFileId, t,
   ]);
 
@@ -426,6 +431,7 @@ export default function Home() {
             onSelect={(id) => {
               setDirectionId(id);
               setProduct("");
+              setCourse("");
               setStep("programs");
             }}
           />
@@ -440,6 +446,7 @@ export default function Home() {
             onBack={() => setStep("directions")}
             onSelect={(p) => {
               setProduct(p);
+              setCourse("");
               setStep("form");
             }}
           />
@@ -462,7 +469,8 @@ export default function Home() {
             onClick={() => setStep("programs")}
             className="text-slate-500 hover:text-slate-800"
           >
-            {currentDirection.code}
+            {currentDirection.code ||
+              directionName(uiLang, currentDirection.id, currentDirection.name)}
           </button>
           <span className="text-slate-300">/</span>
           <span className="font-semibold text-slate-800">
@@ -551,7 +559,7 @@ export default function Home() {
               <p className="text-slate-500">
                 {t("direction")}:{" "}
                 <span className="font-medium text-slate-800">
-                  {currentDirection.code} —{" "}
+                  {currentDirection.code ? `${currentDirection.code} — ` : ""}
                   {directionName(uiLang, currentDirection.id, currentDirection.name)}
                 </span>
               </p>
@@ -561,7 +569,30 @@ export default function Home() {
                   <span className="font-medium text-slate-800">{product}</span>
                 </p>
               )}
-              {product && PROGRAM_PORTAL_SLUG[product] && (
+              {courseOptions.length > 0 && (
+                <label className="mt-2 block">
+                  <span className="text-xs font-medium text-slate-600">
+                    {t("course")}
+                  </span>
+                  <select
+                    value={course}
+                    onChange={(e) => setCourse(e.target.value)}
+                    className="mt-1 w-full rounded-lg border border-slate-300 bg-white px-2.5 py-1.5 text-sm focus:border-sky-500 focus:outline-none"
+                  >
+                    <option value="">{t("courseAny")}</option>
+                    {courseOptions.map((c) => (
+                      <option key={c} value={c}>
+                        {c}
+                        {driveRefFor(c) ? " · 📘" : ""}
+                      </option>
+                    ))}
+                  </select>
+                  <span className="mt-1 block text-[11px] text-slate-400">
+                    {t("courseHint")}
+                  </span>
+                </label>
+              )}
+              {effectiveProduct && PROGRAM_PORTAL_SLUG[effectiveProduct] && (
                 <p className="mt-1 text-xs text-emerald-700">
                   📄 {t("portalDocUsed")}
                 </p>
