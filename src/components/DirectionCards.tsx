@@ -1,6 +1,13 @@
 "use client";
 
 import type { Direction, DirectionAccent, DirectionIcon } from "@/lib/types";
+import {
+  directionDescription,
+  directionName,
+  programsLabel,
+  tr,
+  type UiLang,
+} from "@/lib/i18n";
 
 const ACCENT: Record<
   DirectionAccent,
@@ -117,34 +124,29 @@ function Icon({ name }: { name: DirectionIcon }) {
   }
 }
 
-function programsLabel(n: number): string {
-  if (n === 0) return "Програми додаються";
-  const last = n % 10;
-  const lastTwo = n % 100;
-  if (lastTwo >= 11 && lastTwo <= 14) return `${n} програм`;
-  if (last === 1) return `${n} програма`;
-  if (last >= 2 && last <= 4) return `${n} програми`;
-  return `${n} програм`;
-}
-
 export default function DirectionCards({
   directions,
   onSelect,
+  lang = "uk",
 }: {
   directions: Direction[];
   onSelect: (id: string) => void;
+  lang?: UiLang;
 }) {
   return (
     <section>
-      <h2 className="text-2xl font-bold text-slate-900">Освітні напрямки</h2>
+      <h2 className="text-2xl font-bold text-slate-900">
+        {tr(lang, "directionsTitle")}
+      </h2>
       <p className="mt-1 text-sm text-slate-500">
-        Оберіть напрямок для вибору навчальної програми та створення матеріалів
+        {tr(lang, "directionsSubtitle")}
       </p>
 
       <div className="mt-6 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
         {directions.map((d) => {
           const a = ACCENT[d.accent];
           const count = d.disciplines?.length ?? 0;
+          const desc = directionDescription(lang, d.id, d.description);
           return (
             <button
               key={d.id}
@@ -159,20 +161,20 @@ export default function DirectionCards({
               </span>
 
               <h3 className="text-lg font-bold leading-snug text-slate-900">
-                {d.code} — {d.name}
+                {d.code} — {directionName(lang, d.id, d.name)}
               </h3>
-              {d.description && (
+              {desc && (
                 <p className="mt-2 flex-1 text-sm leading-relaxed text-slate-500">
-                  {d.description}
+                  {desc}
                 </p>
               )}
 
               <span className="mt-6 flex items-center justify-between border-t border-slate-100 pt-4">
                 <span className="text-xs font-semibold uppercase tracking-wide text-slate-400">
-                  {programsLabel(count)}
+                  {programsLabel(lang, count)}
                 </span>
                 <span className={`text-sm font-semibold ${a.link}`}>
-                  Обрати напрямок
+                  {tr(lang, "chooseDirection")}
                   <span className="ml-1.5 inline-block transition-transform group-hover:translate-x-1">
                     →
                   </span>

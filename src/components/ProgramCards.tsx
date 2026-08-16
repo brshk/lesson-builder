@@ -2,6 +2,7 @@
 
 import type { Direction, DirectionAccent } from "@/lib/types";
 import { driveRefFor } from "@/lib/programDrive";
+import { directionName, groupTitle, tr, type UiLang } from "@/lib/i18n";
 
 const ACCENT: Record<
   DirectionAccent,
@@ -74,10 +75,12 @@ export default function ProgramCards({
   direction,
   onSelect,
   onBack,
+  lang = "uk",
 }: {
   direction: Direction;
   onSelect: (program: string) => void;
   onBack: () => void;
+  lang?: UiLang;
 }) {
   const a = ACCENT[direction.accent];
   const programs = direction.disciplines ?? [];
@@ -101,7 +104,7 @@ export default function ProgramCards({
       <h3 className="text-base font-semibold leading-snug text-slate-900">{p}</h3>
       <span className="mt-2 flex-1 text-xs text-slate-400">
         {driveRefFor(p) ? (
-          <span className="text-emerald-600">📘 Навчальна програма прив&apos;язана</span>
+          <span className="text-emerald-600">📘 {tr(lang, "programBound")}</span>
         ) : (
           ""
         )}
@@ -109,7 +112,7 @@ export default function ProgramCards({
       <span
         className={`mt-5 border-t border-slate-100 pt-3 text-sm font-semibold ${a.link}`}
       >
-        Обрати програму
+        {tr(lang, "chooseProgram")}
         <span className="ml-1.5 inline-block transition-transform group-hover:translate-x-1">
           →
         </span>
@@ -124,33 +127,31 @@ export default function ProgramCards({
         onClick={onBack}
         className="mb-4 flex w-fit items-center gap-1.5 text-sm text-slate-500 hover:text-slate-800"
       >
-        ← Усі напрямки
+        ← {tr(lang, "allDirections")}
       </button>
 
       <span
         className={`inline-block rounded-full px-3 py-1 text-xs font-semibold ${a.chip}`}
       >
-        {direction.code} — {direction.name}
+        {direction.code} — {directionName(lang, direction.id, direction.name)}
       </span>
 
       <h2 className="mt-3 text-2xl font-bold text-slate-900">
-        Оберіть навчальну програму
+        {tr(lang, "chooseProgramTitle")}
       </h2>
       <p className="mt-1 text-sm text-slate-500">
-        Матеріали будуть згенеровані з урахуванням обраної програми напрямку
+        {tr(lang, "chooseProgramSubtitle")}
       </p>
 
       {programs.length === 0 ? (
         <div className="mt-6 rounded-2xl border border-dashed border-slate-300 bg-white p-8 text-center">
-          <p className="text-sm text-slate-500">
-            Для цього напрямку програми ще не додані.
-          </p>
+          <p className="text-sm text-slate-500">{tr(lang, "noProgramsYet")}</p>
           <button
             type="button"
             onClick={() => onSelect("")}
             className="mt-4 rounded-lg bg-sky-500 px-4 py-2 text-sm font-semibold text-white hover:bg-sky-600"
           >
-            Продовжити без програми
+            {tr(lang, "continueWithoutProgram")}
           </button>
         </div>
       ) : (
@@ -160,7 +161,7 @@ export default function ProgramCards({
               {g.title && (
                 <div className="mb-3 flex items-center gap-3">
                   <h3 className="text-sm font-bold uppercase tracking-wide text-slate-500">
-                    {g.title}
+                    {groupTitle(lang, g.title)}
                   </h3>
                   <span className="text-xs text-slate-400">
                     {g.programs.length}
@@ -179,7 +180,7 @@ export default function ProgramCards({
             onClick={() => onSelect("")}
             className="mt-5 text-sm text-slate-500 underline hover:text-slate-800"
           >
-            Пропустити — генерувати без прив'язки до програми
+            {tr(lang, "skipProgram")}
           </button>
         </>
       )}
