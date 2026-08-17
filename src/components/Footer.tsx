@@ -66,7 +66,7 @@ export default function Footer({ lang = "uk" }: { lang?: UiLang }) {
             </a>
           </div>
           <p className="mt-2.5 text-xs text-slate-400">
-            © {year} BORSCH EdTech
+            © {year} Vitalii BORSHCHUK
           </p>
         </div>
       </div>

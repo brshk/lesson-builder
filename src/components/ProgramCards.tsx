@@ -3,6 +3,8 @@
 import type { Direction, DirectionAccent } from "@/lib/types";
 import { driveRefFor } from "@/lib/programDrive";
 import { directionName, groupTitle, tr, type UiLang } from "@/lib/i18n";
+import { durationFor } from "@/lib/portalMeta";
+import ProgramIcon from "./ProgramIcon";
 
 const ACCENT: Record<
   DirectionAccent,
@@ -59,18 +61,6 @@ const ACCENT: Record<
   },
 };
 
-/** Ініціали програми для бейджа: «Python + AI» → «PA». */
-function initials(name: string): string {
-  const words = name
-    .replace(/[()+/–—-]/g, " ")
-    .split(/\s+/)
-    .filter((w) => w.length > 1 && !/^(та|і|в|у|для|з|на|the|and)$/i.test(w));
-  return words
-    .slice(0, 2)
-    .map((w) => w[0].toUpperCase())
-    .join("");
-}
-
 export default function ProgramCards({
   direction,
   onSelect,
@@ -89,19 +79,20 @@ export default function ProgramCards({
       ? direction.groups
       : [{ title: "", programs }];
 
-  const card = (p: string) => (
+  const card = (p: string) => {
+    const duration = durationFor(p);
+    return (
     <button
       key={p}
       type="button"
       onClick={() => onSelect(p)}
       className={`group flex flex-col rounded-2xl border border-slate-200 bg-white p-5 text-left shadow-sm transition hover:shadow-md ${a.ring}`}
     >
-      <span
-        className={`mb-4 inline-flex h-10 w-10 items-center justify-center rounded-lg text-sm font-bold ${a.badgeBg} ${a.badgeText}`}
-      >
-        {initials(p)}
+      <span className="mb-4">
+        <ProgramIcon name={p} />
       </span>
       <h3 className="text-base font-semibold leading-snug text-slate-900">{p}</h3>
+      {duration && <p className="mt-1 text-xs text-slate-500">{duration}</p>}
       <span className="mt-2 flex-1 text-xs text-slate-400">
         {driveRefFor(p) ? (
           <span className="text-emerald-600">📘 {tr(lang, "programBound")}</span>
@@ -118,7 +109,8 @@ export default function ProgramCards({
         </span>
       </span>
     </button>
-  );
+    );
+  };
 
   return (
     <section>
