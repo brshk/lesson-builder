@@ -1,0 +1,212 @@
+{
+ "rpz": {
+  "title": "AI Native Developer (Розробка ПЗ + AI)",
+  "category": "Професійна комп'ютерна освіта (ПКО)",
+  "duration": "2 роки · 4 семестри"
+ },
+ "kgid": {
+  "title": "Full-Stack Designer + AI",
+  "category": "Професійна комп'ютерна освіта (ПКО)",
+  "duration": "2 роки · 4 семестри"
+ },
+ "mik": {
+  "title": "Кібербезпека + AI",
+  "category": "Професійна комп'ютерна освіта (ПКО)",
+  "duration": "1,5 роки · 3 семестри"
+ },
+ "koledzh": {
+  "title": "Фаховий коледж IT STEP",
+  "category": "Професійна комп'ютерна освіта (ПКО)",
+  "duration": "після 9/11 класу · 4 роки"
+ },
+ "frontend": {
+  "title": "Front-end розробка + AI",
+  "category": "Програмування",
+  "duration": "7 місяців · ~120 пар"
+ },
+ "full-stack": {
+  "title": "Full-stack + AI",
+  "category": "Програмування",
+  "duration": "12 місяців · ~200 пар"
+ },
+ "qa": {
+  "title": "Тестувальник ПЗ (QA) + AI",
+  "category": "Програмування",
+  "duration": "8 місяців"
+ },
+ "ai-python": {
+  "title": "Python + AI",
+  "category": "Програмування",
+  "duration": "8 місяців"
+ },
+ "devops": {
+  "title": "DevOps-інженер + AI",
+  "category": "Програмування",
+  "duration": "10 місяців"
+ },
+ "vibe-coding": {
+  "title": "Вайб-кодинг",
+  "category": "Програмування",
+  "duration": "4 місяці"
+ },
+ "data-analytics": {
+  "title": "Data Analytics + AI",
+  "category": "Програмування",
+  "duration": "9 місяців"
+ },
+ "graphic-design": {
+  "title": "Графічний дизайн + AI",
+  "category": "Дизайн",
+  "duration": "5 місяців"
+ },
+ "motion-design": {
+  "title": "Motion-design + AI",
+  "category": "Дизайн",
+  "duration": "9 місяців"
+ },
+ "3dsmax": {
+  "title": "Моделювання в 3Ds Max + AI",
+  "category": "Дизайн",
+  "duration": "6 місяців"
+ },
+ "figma": {
+  "title": "FIGMA + AI",
+  "category": "Дизайн",
+  "duration": "12 місяців"
+ },
+ "uiux": {
+  "title": "UI/UX дизайн + AI",
+  "category": "Дизайн",
+  "duration": "7 місяців"
+ },
+ "interior-design": {
+  "title": "Дизайн інтер'єру + AI",
+  "category": "Дизайн",
+  "duration": ""
+ },
+ "canva": {
+  "title": "Дизайн легко: Canva + AI",
+  "category": "Дизайн",
+  "duration": "12 місяців"
+ },
+ "internet-marketing": {
+  "title": "Інтернет-маркетинг + AI",
+  "category": "Маркетинг",
+  "duration": "6 місяців"
+ },
+ "marketer-ai": {
+  "title": "Маркетолог + AI",
+  "category": "Маркетинг",
+  "duration": ""
+ },
+ "digital-pro": {
+  "title": "Digital Marketing Pro",
+  "category": "Маркетинг",
+  "duration": ""
+ },
+ "google-ads": {
+  "title": "Контекстна реклама Google Ads",
+  "category": "Маркетинг",
+  "duration": ""
+ },
+ "targeting": {
+  "title": "Таргетинг у Facebook та Instagram",
+  "category": "Маркетинг",
+  "duration": ""
+ },
+ "ai-zero-pro": {
+  "title": "Штучний інтелект від нуля до профі",
+  "category": "Кібербезпека · AI · Бізнес",
+  "duration": "8 місяців · BASIC + PRO"
+ },
+ "business-ai": {
+  "title": "АІ для бізнесу",
+  "category": "Кібербезпека · AI · Бізнес",
+  "duration": "8 місяців · BASIC + PRO"
+ },
+ "ba": {
+  "title": "Бізнес аналітика + AI",
+  "category": "Кібербезпека · AI · Бізнес",
+  "duration": "50 пар (25 днів)"
+ },
+ "white-hacking": {
+  "title": "Білий хакінг",
+  "category": "Кібербезпека · AI · Бізнес",
+  "duration": ""
+ },
+ "shs-full-stack-designer-ai": {
+  "title": "ШС Full-Stack Designer + AI",
+  "category": "Професійна комп'ютерна освіта (ПКО)",
+  "duration": "старшокласники · 3 роки"
+ },
+ "mka": {
+  "title": "Мала Комп'ютерна Академія",
+  "category": "ІТ-програми та школи",
+  "duration": "1–8 клас · 7–14 років"
+ },
+ "it-start": {
+  "title": "ІТ Старт",
+  "category": "ІТ-програми та школи",
+  "duration": ""
+ },
+ "animation": {
+  "title": "Анімація та мультиплікація",
+  "category": "ІТ-програми та школи",
+  "duration": ""
+ },
+ "roblox": {
+  "title": "Розробка ігор у Roblox Studio",
+  "category": "ІТ-програми та школи",
+  "duration": ""
+ },
+ "unity-teens": {
+  "title": "GameDev Unity для підлітків",
+  "category": "ІТ-програми та школи",
+  "duration": ""
+ },
+ "itstep-school": {
+  "title": "ITSTEP SCHOOL (1–11 клас)",
+  "category": "ІТ-програми та школи",
+  "duration": "1–11 клас · приватна школа"
+ },
+ "unicorn-online-school": {
+  "title": "Unicorn online school",
+  "category": "Нові продукти",
+  "duration": "дистанційна школа"
+ },
+ "english": {
+  "title": "Курси англійської (Step2Talk)",
+  "category": "Інші напрями",
+  "duration": ""
+ },
+ "corporate": {
+  "title": "Корпоративне навчання",
+  "category": "Інші напрями",
+  "duration": ""
+ },
+ "camps": {
+  "title": "Табори (літо / зима)",
+  "category": "Інші напрями",
+  "duration": ""
+ },
+ "individual": {
+  "title": "Індивідуальні курси",
+  "category": "Інші напрями",
+  "duration": ""
+ },
+ "tato-dai-groshi": {
+  "title": "Тато, дай гроші (застосунок)",
+  "category": "Інші напрями",
+  "duration": "сімейний застосунок · безкошто…"
+ },
+ "zakordonni-tabory": {
+  "title": "Закордонні табори",
+  "category": "Інші напрями",
+  "duration": "7–14 днів"
+ },
+ "sonarum": {
+  "title": "Sonarum",
+  "category": "AI-платформа для глибинних інтерв'ю",
+  "duration": ""
+ }
+}
