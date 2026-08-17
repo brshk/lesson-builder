@@ -103,8 +103,11 @@ export const DIRECTIONS: Direction[] = [
       "Освітні програми для дітей та підлітків, спрямовані на розвиток технічного мислення та креативності.",
     accent: "orange",
     icon: "book",
+    // ті самі три продукти, що й у ПКО, але у шкільному форматі
     disciplines: [
+      "ШС AI Native Developer (Розробка ПЗ + AI)",
       "ШС Full-Stack Designer + AI",
+      "ШС Кібербезпека + AI",
       "GameDev Unity для підлітків",
     ],
   },
