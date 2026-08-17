@@ -75,135 +75,185 @@ export function iconKindFor(name: string): ProgramIconKind {
 
 function Glyph({ kind }: { kind: ProgramIconKind }) {
   const p = {
-    width: 20,
-    height: 20,
+    width: 21,
+    height: 21,
     viewBox: "0 0 24 24",
     fill: "none",
     stroke: "currentColor",
-    strokeWidth: 1.9,
+    strokeWidth: 1.8,
     strokeLinecap: "round" as const,
     strokeLinejoin: "round" as const,
   };
   switch (kind) {
-    case "qa":
-      return (
-        <svg {...p}>
-          <path d="M9 3.5h6a1 1 0 0 1 1 1v1H8v-1a1 1 0 0 1 1-1Z" />
-          <path d="M16 5.5h2.5a1 1 0 0 1 1 1v13a1 1 0 0 1-1 1h-13a1 1 0 0 1-1-1v-13a1 1 0 0 1 1-1H8" />
-          <path d="m9 13 2.2 2.2L15.5 11" />
-        </svg>
-      );
+    // програмування — кутові дужки коду
     case "code":
       return (
         <svg {...p}>
-          <path d="m8 17-5-5 5-5M16 7l5 5-5 5M14 4l-4 16" />
+          <path d="m8 6-6 6 6 6M16 6l6 6-6 6M14 3.5l-4 17" />
         </svg>
       );
+
+    // тестування — чек-ліст із галочкою
+    case "qa":
+      return (
+        <svg {...p}>
+          <rect x="8.5" y="2.5" width="7" height="4" rx="1.3" />
+          <path d="M15.5 4.5h2.5A1.5 1.5 0 0 1 19.5 6v13.5a1.5 1.5 0 0 1-1.5 1.5H6a1.5 1.5 0 0 1-1.5-1.5V6A1.5 1.5 0 0 1 6 4.5h2.5" />
+          <path d="m9 13.5 2.2 2.2 4.3-4.7" />
+        </svg>
+      );
+
+    // дизайн — палітра з фарбами
     case "design":
       return (
         <svg {...p}>
-          <path d="M12 3 8.5 10.5h7L12 3Z" />
-          <path d="M12 10.5V21" />
-          <path d="M9.5 21h5" />
+          <path d="M12 2.8c-5.1 0-9.2 4.1-9.2 9.2s4.1 9.2 9.2 9.2c.9 0 1.6-.7 1.6-1.6 0-.4-.2-.8-.4-1.1-.3-.3-.4-.6-.4-1a1.6 1.6 0 0 1 1.6-1.6h1.9c2.9 0 5.3-2.4 5.3-5.3 0-4.4-4.3-7.8-9.6-7.8Z" />
+          <circle cx="7.7" cy="12.2" r="1.1" fill="currentColor" stroke="none" />
+          <circle cx="9.4" cy="8.1" r="1.1" fill="currentColor" stroke="none" />
+          <circle cx="13.8" cy="7.2" r="1.1" fill="currentColor" stroke="none" />
+          <circle cx="17.2" cy="10" r="1.1" fill="currentColor" stroke="none" />
         </svg>
       );
-    case "security":
-      return (
-        <svg {...p}>
-          <path d="M12 3 5 6v6c0 4 3 7.4 7 9 4-1.6 7-5 7-9V6l-7-3Z" />
-          <path d="M12 11v3" />
-          <circle cx="12" cy="9" r="0.6" fill="currentColor" />
-        </svg>
-      );
-    case "school":
-      return (
-        <svg {...p}>
-          <path d="M22 9 12 4 2 9l10 5 10-5Z" />
-          <path d="M6 11.5V16c0 1.1 2.7 2.5 6 2.5s6-1.4 6-2.5v-4.5" />
-        </svg>
-      );
-    case "game":
-      return (
-        <svg {...p}>
-          <rect x="2.5" y="7.5" width="19" height="9" rx="4.5" />
-          <path d="M7 10.5v3M5.5 12h3M15.5 11.5h.01M18 13.5h.01" />
-        </svg>
-      );
-    case "cube":
-      return (
-        <svg {...p}>
-          <path d="m12 3 8 4.5v9L12 21l-8-4.5v-9L12 3Z" />
-          <path d="m4 7.5 8 4.5 8-4.5M12 12v9" />
-        </svg>
-      );
-    case "video":
-      return (
-        <svg {...p}>
-          <rect x="2.5" y="5.5" width="13" height="13" rx="2.5" />
-          <path d="m15.5 10 6-3.5v11l-6-3.5" />
-        </svg>
-      );
-    case "marketing":
-      return (
-        <svg {...p}>
-          <path d="M3.5 10v4a1 1 0 0 0 1 1H7l6 4V5L7 9H4.5a1 1 0 0 0-1 1Z" />
-          <path d="M17 9.5a4 4 0 0 1 0 5" />
-        </svg>
-      );
-    case "ai":
-      return (
-        <svg {...p}>
-          <path d="m12 3 1.9 4.6L18.5 9.5l-4.6 1.9L12 16l-1.9-4.6L5.5 9.5l4.6-1.9L12 3Z" />
-          <path d="M18 16.5 18.8 18.5 20.8 19.3 18.8 20.1 18 22.1 17.2 20.1 15.2 19.3 17.2 18.5Z" />
-        </svg>
-      );
-    case "robot":
-      return (
-        <svg {...p}>
-          <rect x="4.5" y="8" width="15" height="11" rx="3" />
-          <path d="M12 4.5V8M9 13h.01M15 13h.01M9.5 16h5" />
-        </svg>
-      );
+
+    // ілюстрація та цифровий арт — зображення в рамці
     case "art":
       return (
         <svg {...p}>
-          <path d="M12 3.5c-4.7 0-8.5 3.6-8.5 8 0 3 2.4 4.7 4.6 4.7 1.6 0 2.1.9 2.1 1.9 0 1.3 1 2.4 2.3 2.4 4 0 8-3.4 8-8.5 0-4.7-3.8-8.5-8.5-8.5Z" />
-          <circle cx="8.4" cy="10" r="0.9" fill="currentColor" stroke="none" />
-          <circle cx="12" cy="7.8" r="0.9" fill="currentColor" stroke="none" />
-          <circle cx="15.7" cy="10" r="0.9" fill="currentColor" stroke="none" />
+          <rect x="3" y="3.5" width="18" height="17" rx="2.6" />
+          <circle cx="8.6" cy="9.2" r="1.7" />
+          <path d="m3.4 17.5 4.9-4.3a2 2 0 0 1 2.7.05L16 18" />
+          <path d="m13.7 15.4 2.2-2a2 2 0 0 1 2.7.03l2 1.9" />
         </svg>
       );
+
+    // кібербезпека — щит із замком
+    case "security":
+      return (
+        <svg {...p}>
+          <path d="M12 2.8 4.8 5.9v5.6c0 4.3 3.1 8.3 7.2 9.7 4.1-1.4 7.2-5.4 7.2-9.7V5.9L12 2.8Z" />
+          <rect x="9.4" y="10.6" width="5.2" height="4.6" rx="1.1" />
+          <path d="M10.7 10.6V9.4a1.3 1.3 0 0 1 2.6 0v1.2" />
+        </svg>
+      );
+
+    // школи та академії — академічна шапочка
+    case "school":
+      return (
+        <svg {...p}>
+          <path d="M21.5 8.6 12 4.2 2.5 8.6 12 13l9.5-4.4Z" />
+          <path d="M6.3 10.6v4.6c0 1.5 2.6 2.7 5.7 2.7s5.7-1.2 5.7-2.7v-4.6" />
+          <path d="M21.5 8.6v5.2" />
+        </svg>
+      );
+
+    // ігри — геймпад
+    case "game":
+      return (
+        <svg {...p}>
+          <path d="M8.5 7.5h7a5.5 5.5 0 0 1 5.5 5.5v.6a3.4 3.4 0 0 1-6.1 2.1l-.6-.8h-4.6l-.6.8A3.4 3.4 0 0 1 3 13.6V13a5.5 5.5 0 0 1 5.5-5.5Z" />
+          <path d="M7.4 11.2v2.4M6.2 12.4h2.4" />
+          <circle cx="15.6" cy="11.6" r=".95" fill="currentColor" stroke="none" />
+          <circle cx="17.6" cy="13.6" r=".95" fill="currentColor" stroke="none" />
+        </svg>
+      );
+
+    // 3D та моделювання — куб
+    case "cube":
+      return (
+        <svg {...p}>
+          <path d="m12 2.8 8.4 4.7v9.4L12 21.2l-8.4-4.3V7.5L12 2.8Z" />
+          <path d="m3.6 7.5 8.4 4.7 8.4-4.7M12 12.2v9" />
+        </svg>
+      );
+
+    // відео та motion — хлопавка
+    case "video":
+      return (
+        <svg {...p}>
+          <rect x="2.8" y="4.6" width="18.4" height="15" rx="2.4" />
+          <path d="M2.8 9.4h18.4" />
+          <path d="m6.6 4.7 1.9 4.6M12 4.7l1.9 4.6M17.4 4.7l1.9 4.6" />
+          <path d="m10.6 12.6 4.4 2.4-4.4 2.4v-4.8Z" />
+        </svg>
+      );
+
+    // маркетинг — мегафон
+    case "marketing":
+      return (
+        <svg {...p}>
+          <path d="M4.2 10.2v3.6a1.2 1.2 0 0 0 1.2 1.2h2.1l8.4 4.4V4.6L7.5 9H5.4a1.2 1.2 0 0 0-1.2 1.2Z" />
+          <path d="M7.5 15v3.7a1.2 1.2 0 0 0 1.2 1.2h1.4a1.2 1.2 0 0 0 1.2-1.2v-1.9" />
+          <path d="M18.8 9.6a3.6 3.6 0 0 1 0 4.8" />
+        </svg>
+      );
+
+    // штучний інтелект — іскри
+    case "ai":
+      return (
+        <svg {...p}>
+          <path d="m11 3 1.75 4.75L17.5 9.5l-4.75 1.75L11 16l-1.75-4.75L4.5 9.5l4.75-1.75L11 3Z" />
+          <path d="m18 14 .95 2.3 2.3.95-2.3.95L18 20.5l-.95-2.3-2.3-.95 2.3-.95L18 14Z" />
+        </svg>
+      );
+
+    // робототехніка — робот
+    case "robot":
+      return (
+        <svg {...p}>
+          <rect x="4.4" y="8" width="15.2" height="11.4" rx="3" />
+          <path d="M12 4.6V8" />
+          <circle cx="12" cy="3.5" r="1.2" />
+          <circle cx="9.2" cy="12.8" r="1.05" fill="currentColor" stroke="none" />
+          <circle cx="14.8" cy="12.8" r="1.05" fill="currentColor" stroke="none" />
+          <path d="M9.6 16.2h4.8M2.6 12.2v3M21.4 12.2v3" />
+        </svg>
+      );
+
+    // веб — глобус
     case "web":
       return (
         <svg {...p}>
-          <circle cx="12" cy="12" r="8.5" />
-          <path d="M3.5 12h17M12 3.5c2.2 2.4 3.4 5.4 3.4 8.5S14.2 18.1 12 20.5c-2.2-2.4-3.4-5.4-3.4-8.5S9.8 5.9 12 3.5Z" />
+          <circle cx="12" cy="12" r="9" />
+          <path d="M3.2 9.5h17.6M3.2 14.5h17.6" />
+          <path d="M12 3c2.4 2.5 3.6 5.6 3.6 9s-1.2 6.5-3.6 9c-2.4-2.5-3.6-5.6-3.6-9S9.6 5.5 12 3Z" />
         </svg>
       );
+
+    // аналітика — графік зростання
     case "data":
       return (
         <svg {...p}>
-          <path d="M4 20V10M10 20V4M16 20v-7M22 20H2" />
+          <path d="M3.5 3.5v17h17" />
+          <path d="m7 15.5 3.6-4.2 3 2.7 5.4-6.2" />
+          <path d="M15.6 7.8h4.4v4.3" />
         </svg>
       );
+
+    // мови — переклад
     case "language":
       return (
         <svg {...p}>
-          <path d="M4 6h10M9 4v2M11.5 6c-.6 4.2-3.4 7.6-7 9" />
-          <path d="M6.5 11c1.4 2.3 3.5 4 6 5M13 20l4-9 4 9M14.6 17h4.8" />
+          <path d="M3.4 6.2h9.2M8 4.1v2.1M11 6.2c-.6 4.4-3.5 8-7.3 9.5" />
+          <path d="M6.2 11.4c1.4 2.4 3.6 4.2 6.2 5.2" />
+          <path d="m12.8 20.4 4.1-9.3 4.1 9.3M14.5 17.1h4.8" />
         </svg>
       );
+
+    // табори — намет
     case "camp":
       return (
         <svg {...p}>
-          <path d="m12 4 8 15H4l8-15Z" />
-          <path d="m12 10-4.5 9M12 10l4.5 9" />
+          <path d="m12 3.6 9 16.4H3l9-16.4Z" />
+          <path d="m12 10.6-3.7 9.4M12 10.6l3.7 9.4" />
         </svg>
       );
+
+    // за замовчуванням — розгорнутий конспект
     default:
       return (
         <svg {...p}>
-          <path d="m12 3.5 2.6 5.6 6 .8-4.4 4.2 1.1 6-5.3-2.9-5.3 2.9 1.1-6L3.4 9.9l6-.8L12 3.5Z" />
+          <path d="M12 6.6c-1.8-1.4-4.2-2.1-6.9-2.1H3v13.4h2.1c2.7 0 5.1.7 6.9 2.1 1.8-1.4 4.2-2.1 6.9-2.1H21V4.5h-2.1c-2.7 0-5.1.7-6.9 2.1Z" />
+          <path d="M12 6.6v13.4" />
         </svg>
       );
   }

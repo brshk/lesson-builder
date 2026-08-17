@@ -14,44 +14,44 @@ const ACCENT: Record<
   { iconBg: string; iconText: string; link: string; ring: string }
 > = {
   violet: {
-    iconBg: "bg-violet-50",
-    iconText: "text-violet-600",
+    iconBg: "bg-violet-500",
+    iconText: "text-white",
     link: "text-violet-600",
     ring: "hover:border-violet-300",
   },
   orange: {
-    iconBg: "bg-orange-50",
-    iconText: "text-orange-600",
+    iconBg: "bg-orange-500",
+    iconText: "text-white",
     link: "text-orange-600",
     ring: "hover:border-orange-300",
   },
   sky: {
-    iconBg: "bg-sky-50",
-    iconText: "text-sky-600",
+    iconBg: "bg-sky-500",
+    iconText: "text-white",
     link: "text-sky-600",
     ring: "hover:border-sky-300",
   },
   emerald: {
-    iconBg: "bg-emerald-50",
-    iconText: "text-emerald-600",
+    iconBg: "bg-emerald-500",
+    iconText: "text-white",
     link: "text-emerald-600",
     ring: "hover:border-emerald-300",
   },
   teal: {
-    iconBg: "bg-teal-50",
-    iconText: "text-teal-600",
+    iconBg: "bg-teal-500",
+    iconText: "text-white",
     link: "text-teal-600",
     ring: "hover:border-teal-300",
   },
   amber: {
-    iconBg: "bg-amber-50",
-    iconText: "text-amber-600",
+    iconBg: "bg-amber-500",
+    iconText: "text-white",
     link: "text-amber-600",
     ring: "hover:border-amber-300",
   },
   rose: {
-    iconBg: "bg-rose-50",
-    iconText: "text-rose-600",
+    iconBg: "bg-rose-500",
+    iconText: "text-white",
     link: "text-rose-600",
     ring: "hover:border-rose-300",
   },
@@ -64,61 +64,74 @@ function Icon({ name }: { name: DirectionIcon }) {
     viewBox: "0 0 24 24",
     fill: "none",
     stroke: "currentColor",
-    strokeWidth: 1.7,
+    strokeWidth: 1.8,
     strokeLinecap: "round" as const,
     strokeLinejoin: "round" as const,
   };
   switch (name) {
+    // ПКО — академічна шапочка
     case "cap":
       return (
         <svg {...common}>
-          <path d="M22 9 12 4 2 9l10 5 10-5Z" />
-          <path d="M6 11.5V16c0 1.1 2.7 2.5 6 2.5s6-1.4 6-2.5v-4.5" />
+          <path d="M21.5 8.6 12 4.2 2.5 8.6 12 13l9.5-4.4Z" />
+          <path d="M6.3 10.6v4.6c0 1.5 2.6 2.7 5.7 2.7s5.7-1.2 5.7-2.7v-4.6" />
+          <path d="M21.5 8.6v5.2" />
         </svg>
       );
+    // ШС — шкільний рюкзак
     case "book":
       return (
         <svg {...common}>
-          <path d="M12 6.5C10.5 5.2 8.6 4.5 6 4.5H3v13h3c2.6 0 4.5.7 6 2 1.5-1.3 3.4-2 6-2h3v-13h-3c-2.6 0-4.5.7-6 2Z" />
-          <path d="M12 6.5v13" />
+          <path d="M5.8 10a4.2 4.2 0 0 1 4.2-4.2h4a4.2 4.2 0 0 1 4.2 4.2v9.1a1.6 1.6 0 0 1-1.6 1.6H7.4a1.6 1.6 0 0 1-1.6-1.6V10Z" />
+          <path d="M9.6 5.8v-1a2 2 0 0 1 2-2h.8a2 2 0 0 1 2 2v1" />
+          <rect x="9.2" y="12.6" width="5.6" height="4.6" rx="1.3" />
         </svg>
       );
+    // STEP School — будівля школи
     case "school":
       return (
         <svg {...common}>
-          <path d="M3 10.5 12 4l9 6.5" />
-          <path d="M5 12v8h14v-8" />
-          <path d="M10 20v-5h4v5" />
+          <path d="M2.8 20.6h18.4" />
+          <path d="M4.9 20.6V9.6L12 5.1l7.1 4.5v11" />
+          <path d="M9.9 20.6v-5.1h4.2v5.1" />
+          <path d="M12 5.1V2.6h2.6" />
         </svg>
       );
+    // Освіта для дітей — ракета
     case "rocket":
       return (
         <svg {...common}>
-          <path d="M13.5 3c3.5 1 6 4.5 6.5 8.5-3 3-6 5-9 6l-3-3c1-3 3-6 5.5-9Z" />
-          <circle cx="14.5" cy="9.5" r="1.6" />
-          <path d="M8 16c-1.5.5-2.5 2-3 4 2-.5 3.5-1.5 4-3" />
+          <path d="M12 2.6c2.9 2.3 4.6 5.8 4.6 9.5l-1.7 4.4H9.1L7.4 12.1c0-3.7 1.7-7.2 4.6-9.5Z" />
+          <circle cx="12" cy="9.8" r="1.9" />
+          <path d="M9.1 16.5 6.6 18.9c-.6.6-.2 1.6.7 1.6h9.4c.9 0 1.3-1 .7-1.6l-2.5-2.4" />
+          <path d="M12 18.4v2.9" />
         </svg>
       );
+    // СК — стос модулів
     case "layers":
       return (
         <svg {...common}>
-          <path d="m12 3 9 5-9 5-9-5 9-5Z" />
-          <path d="m3 13 9 5 9-5" />
+          <path d="m12 2.8 9 4.6-9 4.6-9-4.6 9-4.6Z" />
+          <path d="m3 12 9 4.6L21 12" />
+          <path d="m3 16.6 9 4.6 9-4.6" />
         </svg>
       );
+    // коледж — будівля
     case "building":
       return (
         <svg {...common}>
-          <path d="M4 21V5a1 1 0 0 1 1-1h9a1 1 0 0 1 1 1v16" />
-          <path d="M15 9h4a1 1 0 0 1 1 1v11" />
-          <path d="M8 8h3M8 12h3M8 16h3M2 21h20" />
+          <path d="M3.6 20.8V5.2a1.4 1.4 0 0 1 1.4-1.4h8.4a1.4 1.4 0 0 1 1.4 1.4v15.6" />
+          <path d="M14.8 9.6h4.2a1.4 1.4 0 0 1 1.4 1.4v9.8" />
+          <path d="M7 8h4.2M7 12h4.2M7 16h4.2M2.4 20.8h19.2" />
         </svg>
       );
+    // ВНЗ — нагорода з дипломом
     case "diploma":
       return (
         <svg {...common}>
-          <circle cx="12" cy="9" r="5" />
-          <path d="m8.5 13.5-1 7.5 4.5-2.5 4.5 2.5-1-7.5" />
+          <circle cx="12" cy="8.6" r="5.4" />
+          <path d="M12 6.4v2.2l1.5 1.1" />
+          <path d="m8.5 13.3-1.1 7.5 4.6-2.5 4.6 2.5-1.1-7.5" />
         </svg>
       );
   }
