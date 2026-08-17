@@ -30,6 +30,8 @@ const SK_GROUPS: ProgramGroup[] = [
     title: "Дизайн",
     programs: [
       "Графічний дизайн + AI",
+      "Graphic Design + AI (Kuala Lumpur)",
+      "ШІ для дизайнера",
       "Motion-design + AI",
       "Моделювання в 3Ds Max + AI",
       "FIGMA + AI",
@@ -43,9 +45,22 @@ const SK_GROUPS: ProgramGroup[] = [
     programs: ["Білий хакінг"],
   },
   {
+    // нова бібліотека програм для практикуючих фахівців (Drive, липень 2026)
+    title: "Курси для професіоналів",
+    programs: [
+      "AI Native Designer",
+      "AI Art Direction",
+      "AI Illustration & Character Design",
+      "AI Game Art & Game UI",
+      "AI Video Production",
+      "Generative UI & Prototyping",
+    ],
+  },
+  {
     title: "Інші напрямки",
     programs: [
       "Штучний інтелект від нуля до профі",
+      "AI Content Creator",
       "АІ для бізнесу",
       "Бізнес аналітика + AI",
       "Інтернет-маркетинг + AI",
